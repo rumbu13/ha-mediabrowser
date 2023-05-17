@@ -1,0 +1,12 @@
+{
+  "domain": "mediabrowser",
+  "name": "MediaBrowser (Emby/Jellyfin) integration",
+  "codeowners": [
+    "@rumbu13"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/rumbu13/mediabrowser",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/rumbu13/mediabrowser/issues",
+  "version": "0.0.1"
+}
