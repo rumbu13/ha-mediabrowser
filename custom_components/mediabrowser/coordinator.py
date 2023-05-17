@@ -18,6 +18,7 @@ class MediaBrowserPushData:
     """Stores MediaBrowser sessions state."""
 
     def __init__(self, sessions: list[MBSession]) -> None:
+        """Initialize MediaBrowser push data."""
         self.sessions: dict[str, MBSession] = {
             session.id: session for session in sessions
         }
@@ -27,6 +28,7 @@ class MediaBrowserPushCoordinator(DataUpdateCoordinator[MediaBrowserPushData]):
     """Data push coordinator."""
 
     def __init__(self, hass: HomeAssistant, hub: MediaBrowserHub) -> None:
+        """Initialize MediaBrowser push coordinator."""
         super().__init__(hass, _LOGGER, name=DOMAIN)
         self.hub = hub
         self.hub.register_sessions_callback(self._sessions_callback)
@@ -43,6 +45,7 @@ class MediaBrowserPollData:
     """Stores MediaBrowser state."""
 
     def __init__(self) -> None:
+        """Initialize MediaBrowser poll data."""
         self.ping: str = None
         self.info: MBSystemInfo = None
         self.sessions: list[MBSession] = []
@@ -96,6 +99,7 @@ class ItemInfo:
     """Basic item information."""
 
     def __init__(self, *args) -> None:
+        """Initialize object."""
         if len(args) == 2:
             assert isinstance(args[0], int)
             assert args[1] is None or isinstance(args[1], MBItem)
@@ -120,6 +124,7 @@ class LibraryInfo:
     """Basic library information."""
 
     def __init__(self, hub: MediaBrowserHub, library_id: str) -> None:
+        """Initialize object."""
         self._hub: MediaBrowserHub = hub
         self._library_id: str = library_id
 

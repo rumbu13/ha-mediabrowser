@@ -1,10 +1,8 @@
-"""Media players for the Media Browser (Emby/Jellyfin) integration."""
-
-
+import json
 from datetime import datetime
 from typing import Any
-from .errors import NotFoundError
 
+import homeassistant.util.dt as utildt
 from homeassistant.components.media_player import (
     MediaPlayerEntity,
     MediaPlayerEntityFeature,
@@ -17,18 +15,13 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-import homeassistant.util.dt as utildt
 
-import json
-
-from .const import (
-    DOMAIN,
-    PUSH_COORDINATOR,
-)
+from .browse_media import async_browse_media_id
+from .const import DOMAIN, PUSH_COORDINATOR
 from .coordinator import MediaBrowserPushCoordinator
 from .entity import MediaBrowserPushEntity
+from .errors import NotFoundError
 from .models import MBSession
-from .browse_media import async_browse_media_id
 
 TICKS_PER_SECOND = 10000000
 VOLUME_RATIO = 100
