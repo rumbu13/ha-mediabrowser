@@ -15,9 +15,16 @@ _Integration to integrate with [mediabrowser][mediabrowser]._
 
 **This integration will set up the following platforms.**
 
-Platform | Description
--- | --
-`sensor` | Show info from blueprint API.
+Platform | Name | Description
+-- | -- | --
+`sensor` | Sessions | Displays number of active sessions. Details of each session can be found in the attributes
+`sensor` | Library name | For each library displays number of items. Last added items can be found in the attributes
+`button` | Rescan | Rescans libraries
+`button` | Restart | Restarts the server
+`button` | Shutdown | Shutdown the server
+`media_player` | Device name | Media player for each server session
+`media_source` | Emby/Jellyfin | Media source that can be used to play media from the server
+
 
 
 ## Installation
@@ -28,7 +35,7 @@ Platform | Description
 1. Download _all_ the files from the `custom_components/mediabrowser/` directory (folder) in this repository.
 1. Place the files you downloaded in the new directory (folder) you created.
 1. Restart Home Assistant
-1. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "Integration blueprint"
+1. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "mediabrowser"
 
 ## Configuration is done in the UI
 
@@ -53,6 +60,6 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
 [forum]: https://community.home-assistant.io/
 [license-shield]: https://img.shields.io/github/license/rumbu13/mediabrowser.svg?style=for-the-badge
-[maintenance-shield]: https://img.shields.io/badge/maintainer-Joakim%20Sørensen%20%40rumbu13-blue.svg?style=for-the-badge
+[maintenance-shield]: https://img.shields.io/badge/maintainer-rumbu13-blue.svg?style=for-the-badge
 [releases-shield]: https://img.shields.io/github/release/rumbu13/mediabrowser.svg?style=for-the-badge
 [releases]: https://github.com/rumbu13/mediabrowser/releases
