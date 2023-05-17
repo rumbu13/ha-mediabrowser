@@ -2,17 +2,53 @@
     "config": {
         "step": {
             "user": {
-                "description": "If you need help with the configuration have a look here: https://github.com/ludeeus/integration_blueprint",
+                "title": "Checking for Emby or Jellyfin servers"
+            },
+            "select": {
+                "title": "Select Emby or Jellyfin server",
+                "description": "Multiple servers available, please select one:",
                 "data": {
-                    "username": "Username",
-                    "password": "Password"
+                    "server": "Server"
+                }
+            },
+            "manual": {
+                "title": "Configure Emby or Jellyfin",
+                "data": {
+                    "host": "Host",
+                    "port": "Port",
+                    "ssl": "Use SSL",
+                    "name": "Name",
+                    "api_key": "API Key"
                 }
             }
         },
         "error": {
-            "auth": "Username/Password is wrong.",
-            "connection": "Unable to connect to the server.",
-            "unknown": "Unknown error occurred."
+            "bad_request": "Are you sure that this is an Emby or Jellyfin server?",
+            "cannot_connect": "Cannot connect",
+            "invalid_auth": "Invalid authentication",
+            "unknown": "Unknown error",
+            "weak_auth": "The provided API Key dows not have enough rights",
+            "timeout": "Timeout while trying to connect to server"
+        },
+        "abort": {
+            "already_configured": "Device is already configured"
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Media browser options",
+                "data": {
+                    "api_key": "API Key",
+                    "client": "Client name",
+                    "device_name": "Device name",
+                    "device_id": "Device identifier",
+                    "device_version": "Device version",
+                    "ignore_web_players": "Ignore web players",
+                    "ignore_dlna_players": "Ignore DLNA players",
+                    "ignore_mobile_players": "Ignore mobile players"
+                }
+            }
         }
     }
 }
