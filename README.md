@@ -15,15 +15,14 @@ _Home Assistant integration for [Emby][emby] and [Jellyfin][jellyfin]._
 
 ## Summary
 
-This integration support both media server types, both of them using the same API with minor differences. The following
-components are installed:
-- A [media source][mediasource] for browsing your server(s) libraries
-- Multiple [media players][mediaplayer], one for each connected session
-- A [sensor][sensor] displaying number of active sessions
-- Multiple [sensors][sensor], one for each library displaying number of items in your library
-- Multiple [sensors][sensor] for upcoming media
-- Multiple [buttons][button] used for rescanning, rebooting or stopping your server
-- An enhanced [play media][play_media] service allowing you to play anything from your libraries based on various search criteria
+This integration support both media server types. The following components are installed:
+- [Media Source][mediasource] for browsing your server(s) libraries
+- [Media Player][mediaplayer], one for each connected session
+- [Session Sensor][sensor] for active sessions
+- [Library Sensor][sensor], one for each library
+- [Upcoming Media Sensor][sensor] one for each media type
+- [Server Button][button] for rescanning, rebooting or stopping your server
+- [Play Media Service][play_media] allowing you to play anything from your libraries based on various search criteria
 
 
 This integration exposes a MediaBrowser server (Emby or Jellyfin) as a [media source][mediasource] in Home Assistant.
