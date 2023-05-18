@@ -41,7 +41,7 @@ Configuration is done using user interface. The integration will try to detect a
 If more than one server is found, a selection dialog will be displayed.
 
 |Field|Example|Explanation|
-|--|--|--|
+|--|--|-----|
 |Host|192.168.1.1|Host name or IP address of your server|
 |Port|8096|Connection port, usually 8096 or 8192 if using SSL
 |Use SSL|-|Check if your server uses a SSL connection
