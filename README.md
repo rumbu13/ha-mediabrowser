@@ -41,12 +41,12 @@ Configuration is done using user interface. The integration will try to detect a
 If more than one server is found, a selection dialog will be displayed.
 
 |Field|Example|Explanation|
-|---|--|-----|
-|Host|192.168.1.1|Host name or IP address of your server|
-|Port|8096|Connection port, usually 8096 or 8192 if using SSL
-|Use SSL|-|Check if your server uses a SSL connection
-|API Key|fe6e72be02e04f2586cad47aca9077f9|API Key used to connect
-|Name|My Flix|Optional name of you server. This will be used when creating entities or browsing media
+|--|--|--|
+|`Host`|192.168.1.1|Host name or IP address of your server|
+|`Port`|8096|Connection port, usually 8096 or 8192 if using SSL
+|`Use SSL`|-|Check if your server uses a SSL connection
+|`API Key`|fe6e72be02e04f2586cad47aca9077f9|API Key used to connect
+|`Name`|My Flix|Optional name of you server. This will be used when creating entities or browsing media
 
 
 
