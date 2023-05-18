@@ -39,7 +39,7 @@ This integration support both media server types. The following components are i
 
 Configuration is done using user interface. The integration will try to detect automatically your server settings
 
-_Troubleshoting: in order to detect your Emby or Jellyfin servers, please configure your server firewall to allow UDP incoming packets on port 7359
+_*Troubleshoting*: in order to detect your Emby or Jellyfin servers, please configure your server firewall to allow UDP incoming packets on port 7359_
 
 ## Contributions are welcome!
 
