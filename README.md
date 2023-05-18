@@ -25,26 +25,6 @@ This integration support both media server types. The following components are i
 - [Play Media Service][play_media] allowing you to play anything from your libraries based on various search criteria
 
 
-This integration exposes a MediaBrowser server (Emby or Jellyfin) as a [media source][mediasource] in Home Assistant.
-It will create also media players for each
-
-
-**This integration will set up the following platforms.**
-
-
-
-Platform | Name | Description
--- | -- | --
-`sensor` | Sessions | Displays number of active sessions. Details of each session can be found in the attributes
-`sensor` | Library name | For each library displays number of items. Last added items can be found in the attributes
-`button` | Rescan | Rescans libraries
-`button` | Restart | Restarts the server
-`button` | Shutdown | Shutdown the server
-`media_player` | Device name | Media player for each server session
-`media_source` | Emby/Jellyfin | Media source that can be used to play media from the server
-
-
-
 ## Installation
 
 1. Using the tool of choice open the directory (folder) for your HA configuration (where you find `configuration.yaml`).
@@ -55,9 +35,11 @@ Platform | Name | Description
 1. Restart Home Assistant
 1. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "mediabrowser"
 
-## Configuration is done in the UI
+## Configuration
 
-<!---->
+Configuration is done using user interface. The integration will try to detect automatically your server settings
+
+_*Troubleshooting*: in order to detect your Emby or Jellyfin servers, please configure your server firewall to allow UDP incoming packets on port 7359
 
 ## Contributions are welcome!
 
