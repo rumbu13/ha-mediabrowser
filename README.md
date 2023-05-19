@@ -15,35 +15,14 @@ _Home Assistant integration for [Emby][emby] and [Jellyfin][jellyfin]._
 
 ## Summary
 
-This integration support both media server types, both of them using the same API with minor differences. The following
-components are installed:
-- A [media source][mediasource] for browsing your server(s) libraries
-- Multiple [media players][mediaplayer], one for each connected session
-- A [sensor][sensor] displaying number of active sessions
-- Multiple [sensors][sensor], one for each library displaying number of items in your library
-- Multiple [sensors][sensor] for upcoming media
-- Multiple [buttons][button] used for rescanning, rebooting or stopping your server
-- An enhanced [play media][play_media] service allowing you to play anything from your libraries based on various search criteria
-
-
-This integration exposes a MediaBrowser server (Emby or Jellyfin) as a [media source][mediasource] in Home Assistant.
-It will create also media players for each
-
-
-**This integration will set up the following platforms.**
-
-
-
-Platform | Name | Description
--- | -- | --
-`sensor` | Sessions | Displays number of active sessions. Details of each session can be found in the attributes
-`sensor` | Library name | For each library displays number of items. Last added items can be found in the attributes
-`button` | Rescan | Rescans libraries
-`button` | Restart | Restarts the server
-`button` | Shutdown | Shutdown the server
-`media_player` | Device name | Media player for each server session
-`media_source` | Emby/Jellyfin | Media source that can be used to play media from the server
-
+This integration support both media server types. The following components are installed:
+- [Media Source][mediasource] for browsing your server(s) libraries
+- [Media Player][mediaplayer], one for each connected session
+- [Session Sensor][sensor] for active sessions
+- [Library Sensor][sensor], one for each library
+- [Upcoming Media Sensor][sensor] one for each media type
+- [Server Button][button] for rescanning, rebooting or stopping your server
+- [Play Media Service][play_media] allowing you to play anything from your libraries based on various search criteria
 
 
 ## Installation
@@ -51,14 +30,27 @@ Platform | Name | Description
 1. Using the tool of choice open the directory (folder) for your HA configuration (where you find `configuration.yaml`).
 1. If you do not have a `custom_components` directory (folder) there, you need to create it.
 1. In the `custom_components` directory (folder) create a new folder called `mediabrowser`.
-1. Download _all_ the files from the `custom_components/mediabrowser/` directory (folder) in this repository.
+1. Download _all_ the files from the `custom_components/mediabrowser/` directory (folder) in this repository or download the latest release
 1. Place the files you downloaded in the new directory (folder) you created.
 1. Restart Home Assistant
-1. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "mediabrowser"
+1. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for `mediabrowser`
 
-## Configuration is done in the UI
+## Configuration
 
-<!---->
+Configuration is done using user interface. The integration will try to detect automatically your server settings. 
+If more than one server is found, a selection dialog will be displayed.
+
+|Field|Example|Explanation|
+|--|--|--|
+|`Host`|192.168.1.1|Host name or IP address of your server|
+|`Port`|8096|Connection port, usually 8096 or 8192 if using SSL
+|`Use_SSL`|-|Check if your server uses a SSL connection
+|`API_Key`|fe6e72be02e04f2586cad47aca9077f9|API Key used to connect
+|`Name`|My Flix|Optional name of you server. This will be used when creating entities or browsing media
+
+
+
+_Troubleshoting: in order to detect your Emby or Jellyfin servers, please configure your server firewall to allow UDP incoming packets on port 7359_
 
 ## Contributions are welcome!
 
