@@ -39,6 +39,8 @@ PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.MEDIA_PLAYER, Platform.BU
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Media Browser (Emby/Jellyfin) from a config entry."""
 
+    _LOGGER.debug(entry.options)
+
     hub = MediaBrowserHub(
         host=entry.data[CONF_HOST],
         api_key=entry.options[CONF_API_KEY],
@@ -48,7 +50,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         device_version=entry.options[CONF_DEVICE_VERSION],
         port=entry.data[CONF_PORT],
         use_ssl=entry.data[CONF_SSL],
-        custom_name=entry.data.get(CONF_NAME),
+        custom_name=entry.options.get(CONF_NAME),
         ignore_web_players=entry.options.get(CONF_IGNORE_WEB_PLAYERS, False),
         ignore_dlna_players=entry.options.get(CONF_IGNORE_DLNA_PLAYERS, False),
         ignore_mobile_players=entry.options.get(CONF_IGNORE_MOBILE_PLAYERS, False),
@@ -91,6 +93,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return unload_ok
 
 
-async def async_options_update_listener(hass: HomeAssistant, config_entry: ConfigEntry):
+async def async_options_update_listener(
+    hass: HomeAssistant, config_entry: ConfigEntry
+) -> None:
     """Handle options update."""
     await hass.config_entries.async_reload(config_entry.entry_id)

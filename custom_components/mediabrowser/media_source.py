@@ -1,7 +1,6 @@
 """The Media Source implementation for the MediaBrowser integration."""
 
 
-from .errors import BrowseMediaError
 from homeassistant.components.media_player import MediaClass
 from homeassistant.components.media_source import (
     BrowseMediaSource,
@@ -13,9 +12,10 @@ from homeassistant.core import HomeAssistant
 
 from .browse import get_children, get_item
 from .const import DOMAIN, HUB, MEDIA_CLASS_MAP
+from .errors import BrowseMediaError
 from .hub import MediaBrowserHub
-from .models import MBItem
 from .icons import EMBY_ICON, JELLYFIN_ICON
+from .models import MBItem
 
 PLAYABLE_MEDIA_TYPES = {"Audio", "Video", "Photo"}
 
@@ -49,7 +49,7 @@ class MBSource(MediaSource):
             await hub.async_get_items({"Fields": "MediaSources", "Ids": parts[1]})
         ).items[0]
 
-        url: str = None
+        url: str | None = None
         match media_item.media_type:
             case "Video":
                 url = _get_video_url(hub, media_item)
@@ -62,24 +62,24 @@ class MBSource(MediaSource):
                     f"Unsupported media type:{media_item.media_type}"
                 )
 
-        if media_item.mime_type is not None:
+        if media_item.mime_type is not None and url is not None:
             return PlayMedia(url, media_item.mime_type)
 
-        raise BrowseMediaError(f"Cannot obtain mime information for {item.id}")
+        raise BrowseMediaError(f"Cannot obtain mime information for {item.identifier}")
 
     async def async_browse_media(self, item: MediaSourceItem) -> BrowseMediaSource:
         if not item.identifier:
             return await self._async_browse_hubs()
 
-        p = item.identifier.find("/")
-        if p < 0:
+        pos = item.identifier.find("/")
+        if pos < 0:
             return await self._async_browse(self.hubs[item.identifier], None, True)
         return await self._async_browse(
-            self.hubs[item.identifier[0:p]], item.identifier[p + 1 :], True
+            self.hubs[item.identifier[0:pos]], item.identifier[pos + 1 :], True
         )
 
     async def _async_browse(
-        self, hub: MediaBrowserHub, item_id: str, include_children: bool
+        self, hub: MediaBrowserHub, item_id: str | None, include_children: bool
     ) -> BrowseMediaSource:
         """Browses the specified item."""
         if item_id is None:
@@ -108,7 +108,7 @@ class MBSource(MediaSource):
         return source
 
     async def _async_browse_item(
-        self, hub: MediaBrowserHub, item: MBItem, include_children: bool
+        self, hub: MediaBrowserHub, item: MBItem | None, include_children: bool
     ) -> BrowseMediaSource:
         if item is None:
             media_class = MediaClass.DIRECTORY
@@ -120,7 +120,7 @@ class MBSource(MediaSource):
             thumb = EMBY_ICON if hub.is_emby else JELLYFIN_ICON
 
         else:
-            media_class = MEDIA_CLASS_MAP.get(item.type) or (
+            media_class = MEDIA_CLASS_MAP.get(item.type or "") or (
                 MediaClass.DIRECTORY if item.is_folder else None
             )
             media_content_type = item.mime_type
@@ -167,7 +167,10 @@ def _get_video_url(hub: MediaBrowserHub, item: MBItem) -> str | None:
         else None
     )
     if media_source is not None:
-        return f"{hub.server_url}/Videos/{item.id}/master.m3u8?api_key={hub.api_key}&MediaSourceId={media_source.id}"
+        return (
+            f"{hub.server_url}/Videos/{item.id}/master.m3u8?"
+            + f"api_key={hub.api_key}&MediaSourceId={media_source.id}"
+        )
     return None
 
 

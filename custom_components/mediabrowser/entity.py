@@ -1,7 +1,7 @@
 """Entity base class for the Media Browser (Emby/Jellyfin) integration."""
 
 from typing import Any
-from .hub import MediaBrowserHub
+
 from homeassistant.helpers.device_registry import DeviceEntryType
 from homeassistant.helpers.entity import DeviceInfo, Entity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -15,6 +15,7 @@ from .const import (
     MANUFACTURER_UNKNOWN,
 )
 from .coordinator import MediaBrowserPollCoordinator, MediaBrowserPushCoordinator
+from .hub import MediaBrowserHub
 
 
 class MediaBrowserEntity(Entity):
@@ -59,7 +60,7 @@ class MediaBrowserPushEntity(CoordinatorEntity[MediaBrowserPushCoordinator]):
 def _get_device_info(hub: MediaBrowserHub) -> DeviceInfo:
     return DeviceInfo(
         entry_type=DeviceEntryType.SERVICE,
-        identifiers={(DOMAIN, hub.server_id)},
+        identifiers={(DOMAIN, hub.server_id or "")},
         manufacturer=MANUFACTURER_EMBY
         if hub.is_emby
         else MANUFACTURER_JELLYFIN

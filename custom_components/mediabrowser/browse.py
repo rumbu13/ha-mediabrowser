@@ -1,11 +1,11 @@
 """Browsing helper module."""
 
 import logging
-from .models import MBItem
-from .hub import MediaBrowserHub
-from .errors import BrowseMediaError
-from .const import VIRTUAL_FOLDER_MAP
 
+from .const import VIRTUAL_FOLDER_MAP
+from .errors import BrowseMediaError
+from .hub import MediaBrowserHub
+from .models import MBItem
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ VIRTUAL_FILTER_MAP = {
 }
 
 
-async def get_children(hub: MediaBrowserHub, item: MBItem) -> list[MBItem]:
+async def get_children(hub: MediaBrowserHub, item: MBItem | None) -> list[MBItem]:
     """Gets children for the specified item."""
     if item is None:
         return await _get_libraries(hub)
@@ -31,7 +31,18 @@ async def get_children(hub: MediaBrowserHub, item: MBItem) -> list[MBItem]:
             return await _get_collection(hub, item)
         case "Virtual":
             return await _get_virtual_folder(hub, item)
-        case "Artist" | "AlbumArtist" | "MusicArtist" | "Person" | "Genre" | "MusicGenre" | "Studio" | "Prefix" | "Year" | "Tag":
+        case (
+            "Artist"
+            | "AlbumArtist"
+            | "MusicArtist"
+            | "Person"
+            | "Genre"
+            | "MusicGenre"
+            | "Studio"
+            | "Prefix"
+            | "Year"
+            | "Tag"
+        ):
             return await _get_virtual_children(hub, item)
         case "Playlist":
             return await _get_playlist_children(hub, item.id)
@@ -66,7 +77,7 @@ async def _get_libraries(hub: MediaBrowserHub) -> list[MBItem]:
 
     channels = (await hub.async_get_channels()).items
 
-    return sorted(libraries + channels, key=lambda x: x.name)
+    return sorted(libraries + channels, key=lambda x: x.name or "")
 
 
 async def _get_collection(hub: MediaBrowserHub, item: MBItem) -> list[MBItem]:
@@ -162,7 +173,7 @@ async def _get_music(hub: MediaBrowserHub, library: MBItem) -> list[MBItem]:
         _make_virtual_folder("folders", library.id),
     ] + sorted(
         albums.items + videos.items,
-        key=lambda x: x.sort_name if x.sort_name is not None else x.name,
+        key=lambda x: x.sort_name if x.sort_name is not None else x.name or "",
     )
 
 
@@ -371,20 +382,6 @@ async def _get_album_artists(hub: MediaBrowserHub, parent_id: str) -> list[MBIte
     return _make_virtual_subfolders("album_artists", children.items, parent_id)
 
 
-async def _get_composers(hub: MediaBrowserHub, parent_id: str) -> list[MBItem]:
-    children = await hub.async_get_artists(
-        {
-            "Recursive": "true",
-            "ParentId": parent_id,
-            "SortBy": "SortName",
-            "SortOrder": "Ascending",
-            "ArtistType": "Composer",
-        }
-    )
-
-    return _make_virtual_subfolders("composers", children.items, parent_id)
-
-
 async def _get_persons(hub: MediaBrowserHub, parent_id: str) -> list[MBItem]:
     children = await hub.async_get_persons(
         {
@@ -492,9 +489,9 @@ async def get_item(hub: MediaBrowserHub, item_id: str) -> MBItem:
     if len(parts) == 3:
         match parts[0]:
             case "prefixes":
-                item = MBItem({"Name": parts[2], "Type": "Prefix"})
+                item = MBItem({"Id": parts[2], "Name": parts[2], "Type": "Prefix"})
             case "years":
-                item = MBItem({"Name": parts[2], "Type": "Year"})
+                item = MBItem({"Id": parts[2], "Name": parts[2], "Type": "Year"})
             case _:
                 try:
                     item = (await hub.async_get_items({"Ids": parts[2]})).items[0]

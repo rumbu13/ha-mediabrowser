@@ -1,0 +1,95 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Se caută servere Emby sau Jellyfin"
+            },
+            "select": {
+                "title": "Alege un server Emby sau Jellyfin",
+                "description": "Am descoperit mai multe servere, alege unul:",
+                "data": {
+                    "server": "Server"
+                }
+            },
+            "manual": {
+                "title": "Configurează Emby or Jellyfin",
+                "data": {
+                    "host": "Gazdă",
+                    "port": "Port",
+                    "ssl": "Folosește SSL",
+                    "name": "Nume",
+                    "api_key": "Cheie API"
+                }
+            }
+        },
+        "error": {
+            "bad_request": "Ești sigur(ă) că acesta este un server Emby sau Jellyfin?",
+            "cannot_connect": "Conectare imposibilă",
+            "invalid_auth": "Autentificare eșuată",
+            "unknown": "Eroare necunoscută",
+            "weak_auth": "Cheia API nu oferă drepturi suficiente",
+            "timeout": "Durează prea mult conectarea la server"
+        },
+        "abort": {
+            "already_configured": "Acest server este deja configurat"
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Alece o opțiune",
+                "menu_options": {
+                    "auth": "Configurează autentificarea",
+                    "players": "Configurează dispozitivele",
+                    "latest": "Configurează senzorii",
+                    "advanced": "Opțiuni avansate"
+                }
+            },
+            "auth": {
+                "title": "Authentication",
+                "data": {
+                    "api_key": "Cheie api",
+                    "user": "Utilizator"
+                }
+            },
+            "players": {
+                "title": "Dispozitive",
+                "data": {
+                    "ignore_web_players": "Ignoră dispozitivele web",
+                    "ignore_dlna_players": "Ignoră dispozitivele DLNA",
+                    "ignore_mobile_players": "Ignore dispozitivele mobile"
+                }
+            },
+            "latest": {
+                "title": "Crează senzori pentru",
+                "data": {
+                    "latest_movies": "Ultimele filme",
+                    "latest_series": "Ultimele seriale",
+                    "latest_songs": "Ultimele melodii",
+                    "latest_music_videos": "Ultimele videoclipuri muzicale",
+                    "latest_photos": "Ultimele fotografii",
+                    "latest_videos": "Ultimele videoclipuri",
+                    "latest_books": "Ultimele cărți",
+                    "latest_trailers": "Ultimele reclame"
+                }
+            },
+            "advanced": {
+                "title": "Opțiuni avamsate",
+                "data": {
+                    "name": "Personalizează numele serverului",
+                    "client": "Nume client",
+                    "device_name": "Nume dispozitiv",
+                    "device_id": "Identificator dispozitiv",
+                    "device_version": "Versiune dispoitiv"
+                }
+            }
+        },
+        "error": {
+            "cannot_connect": "Conectare imposibilă",
+            "invalid_auth": "Autentificare eșuată",
+            "unknown": "Eroare necunoscută",
+            "weak_auth": "Cheia API nu oferă drepturi suficiente",
+            "timeout": "Durează prea mult conectarea la server"
+        }
+    }
+}

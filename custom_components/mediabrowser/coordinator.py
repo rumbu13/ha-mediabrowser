@@ -6,10 +6,10 @@ from typing import Any
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import DOMAIN, UPDATE_INTERVAL
+from .const import DOMAIN, LATEST_QUERY_PARAMS, LATEST_TYPES, UPDATE_INTERVAL
 from .helpers import response_to_dict
 from .hub import MediaBrowserHub
-from .models import MBItem, MBResponse, MBSession, MBSystemInfo
+from .models import MBItem, MBResponse, MBSystemInfo
 
 _LOGGER = logging.getLogger(__package__)
 
@@ -17,11 +17,11 @@ _LOGGER = logging.getLogger(__package__)
 class MediaBrowserPushData:
     """Stores MediaBrowser sessions state."""
 
-    def __init__(self, sessions: list[MBSession]) -> None:
+    def __init__(self, sessions_raw: list[dict[str, Any]]) -> None:
         """Initialize MediaBrowser push data."""
-        self.sessions: dict[str, MBSession] = {
-            session.id: session for session in sessions
-        }
+        self.sessions: dict[str, dict[str, Any]] = {}
+        for session in reversed(sessions_raw):
+            self.sessions[get_session_key(session)] = session
 
 
 class MediaBrowserPushCoordinator(DataUpdateCoordinator[MediaBrowserPushData]):
@@ -31,13 +31,13 @@ class MediaBrowserPushCoordinator(DataUpdateCoordinator[MediaBrowserPushData]):
         """Initialize MediaBrowser push coordinator."""
         super().__init__(hass, _LOGGER, name=DOMAIN)
         self.hub = hub
-        self.hub.register_sessions_callback(self._sessions_callback)
+        self.hub.register_sessions_raw_callback(self._sessions_raw_callback)
         self.players: set[str] = set()
 
     async def _async_update_data(self) -> MediaBrowserPushData:
-        return MediaBrowserPushData(await self.hub.async_get_sessions())
+        return MediaBrowserPushData(await self.hub.async_get_sessions_raw())
 
-    def _sessions_callback(self, sessions: list[MBSession]) -> None:
+    def _sessions_raw_callback(self, sessions: list[dict[str, Any]]) -> None:
         self.async_set_updated_data(MediaBrowserPushData(sessions))
 
 
@@ -46,11 +46,12 @@ class MediaBrowserPollData:
 
     def __init__(self) -> None:
         """Initialize MediaBrowser poll data."""
-        self.ping: str = None
-        self.info: MBSystemInfo = None
-        self.sessions: list[MBSession] = []
+        self.ping: str | None = None
+        self.info: MBSystemInfo = MBSystemInfo.empty()
+        # self.sessions: list[MBSession] = []
         self.libraries: dict[str, MBItem] = {}
         self.library_infos: dict[str, LibraryInfo] = {}
+        self.latest_infos: dict[str, list[dict[str, Any]]] = {}
 
 
 class MediaBrowserPollCoordinator(DataUpdateCoordinator[MediaBrowserPollData]):
@@ -65,11 +66,10 @@ class MediaBrowserPollCoordinator(DataUpdateCoordinator[MediaBrowserPollData]):
         data: MediaBrowserPollData = MediaBrowserPollData()
         data.ping = await self.hub.async_ping()
         data.info = await self.hub.async_get_info()
-        data.sessions = await self.hub.async_get_sessions()
         data.libraries = response_to_dict(await self.hub.async_get_libraries())
         data.library_infos = {}
         for library_id, library in data.libraries.items():
-            info: LibraryInfo = None
+            info: LibraryInfo | None = None
             match library.collection_type:
                 case "movies":
                     info = MovieLibraryInfo(self.hub, library_id)
@@ -92,29 +92,35 @@ class MediaBrowserPollCoordinator(DataUpdateCoordinator[MediaBrowserPollData]):
             if info is not None:
                 await info.refresh()
                 data.library_infos[library_id] = info
+        for item_type in LATEST_TYPES:
+            response = await self.hub.async_get_items_raw(
+                LATEST_QUERY_PARAMS | {"IncludeItemTypes": item_type}
+            )
+            data.latest_infos[item_type] = (
+                response["Items"] if "Items" in response else []
+            )
         return data
 
 
 class ItemInfo:
     """Basic item information."""
 
-    def __init__(self, *args) -> None:
-        """Initialize object."""
-        if len(args) == 2:
-            assert isinstance(args[0], int)
-            assert args[1] is None or isinstance(args[1], MBItem)
-            self.count: int = args[0]
-            self.item: MBItem = args[1]
+    def __init__(
+        self, count_or_response: int | MBResponse, item: MBItem | None = None
+    ) -> None:
+        if isinstance(count_or_response, int):
+            self.count: int = count_or_response
+            self.item: MBItem | None = item
         else:
-            assert len(args) == 1
-            assert args[0] is None or isinstance(args[0], MBResponse)
-            self.count: int = args[0].total_record_count
-            self.item: MBItem = args[0].items[0] if len(args[0].items) > 0 else None
+            self.count: int = count_or_response.total_record_count
+            self.item: MBItem | None = (
+                count_or_response.items[0] if len(count_or_response.items) > 0 else None
+            )
 
     @property
     def attributes(self) -> dict[str, Any]:
         """Returns content as attributes."""
-        data = {"count": self.count}
+        data: dict[str, Any] = {"count": self.count}
         if self.item is not None:
             data["last_item_name"] = self.item.name
         return data
@@ -274,7 +280,7 @@ class MusicLibraryInfo(LibraryInfo):
         self.genres_info = ItemInfo(0, None)
         self.studios_info = ItemInfo(0, None)
 
-    async def refresh(self):
+    async def refresh(self) -> None:
         self.item_info = ItemInfo(await self._fetch_items("Audio"))
         self.albums_info = ItemInfo(await self._fetch_items("MusicAlbum"))
         self.artists_info = ItemInfo(await self._fetch_artists())
@@ -350,7 +356,7 @@ class MusicVideosLibraryInfo(LibraryInfo):
 class BooksLibraryInfo(LibraryInfo):
     """Books library information."""
 
-    async def refresh(self):
+    async def refresh(self) -> None:
         self.item_info = ItemInfo(await self._fetch_items("Book"))
 
     @property
@@ -361,7 +367,7 @@ class BooksLibraryInfo(LibraryInfo):
 class BoxsetsLibraryInfo(LibraryInfo):
     """Boxsets library information."""
 
-    async def refresh(self):
+    async def refresh(self) -> None:
         self.item_info = ItemInfo(await self._fetch_items("BoxSet"))
 
     @property
@@ -382,7 +388,7 @@ class MixedLibraryInfo(LibraryInfo):
         self.genres_info = ItemInfo(0, None)
         self.studios_info = ItemInfo(0, None)
 
-    async def refresh(self):
+    async def refresh(self) -> None:
         self.item_info = ItemInfo(await self._fetch_items("Episode,Movie"))
         self.movies_info = ItemInfo(await self._fetch_items("Movie"))
         self.episodes_info = ItemInfo(await self._fetch_items("Episode"))
@@ -405,3 +411,8 @@ class MixedLibraryInfo(LibraryInfo):
             "studios": self.studios_info.attributes,
             "genres": self.genres_info.attributes,
         }
+
+
+def get_session_key(session: dict[str, Any]) -> str:
+    """Gets a uniqe session key"""
+    return f'{session["DeviceId"]}-{session["Client"]}'

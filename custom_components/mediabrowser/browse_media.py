@@ -6,12 +6,14 @@ from homeassistant.components.media_player import MediaClass, MediaType
 from homeassistant.components.media_player.browse_media import BrowseMedia
 
 from .browse import get_children, get_item
+from .const import MEDIA_CLASS_MAP, MEDIA_TYPE_MAP
 from .hub import MediaBrowserHub
 from .models import MBItem
-from .const import MEDIA_CLASS_MAP, MEDIA_TYPE_MAP
 
 _LOGGER = logging.getLogger(__name__)
 
+MEDIA_CLASS_NONE = ""
+MEDIA_TYPE_NONE = ""
 
 CONTENT_TYPE_MAP = {
     "Audio": MediaType.MUSIC,
@@ -41,8 +43,8 @@ PLAYABLE_FOLDERS = {
 
 async def async_browse_media(
     hub: MediaBrowserHub,
-    item: MBItem,
-    playable_types: list[str],
+    item: MBItem | None,
+    playable_types: list[str] | None,
     include_children: bool,
 ) -> BrowseMedia:
     """Browses the specified item."""
@@ -50,24 +52,24 @@ async def async_browse_media(
         media_class = MediaClass.DIRECTORY
         media_content_type = ""
         media_content_id = "root"
-        title = None
+        title = ""
         thumb = None
         can_expand = True
         can_play = False
 
     else:
-        media_class = MEDIA_CLASS_MAP.get(item.type) or (
-            MediaClass.DIRECTORY if item.is_folder else None
+        media_class = MEDIA_CLASS_MAP.get(item.type or "") or (
+            MediaClass.DIRECTORY if item.is_folder else MEDIA_CLASS_NONE
         )
-        media_content_type = MEDIA_TYPE_MAP.get(item.type) or ""
+        media_content_type = MEDIA_TYPE_MAP.get(item.type or "") or ""
         thumb = item.thumb_url
         media_content_id = item.id
-        title = item.name
-        can_play = (
-            item.is_folder and item.type in PLAYABLE_FOLDERS
-        ) or item.media_type in playable_types
+        title = item.name or "Unknown"
+        can_play = (item.is_folder and item.type in PLAYABLE_FOLDERS) or (
+            playable_types is not None and item.media_type in playable_types
+        )
 
-        can_expand = item.is_folder
+        can_expand = item.is_folder or False
 
     result = BrowseMedia(
         media_class=media_class,
@@ -84,18 +86,17 @@ async def async_browse_media(
         result.children = [
             await async_browse_media(hub, child, playable_types, False)
             for child in await get_children(hub, item)
-            if child.is_folder or child.media_type in playable_types
+            if child.is_folder
+            or (playable_types is not None and child.media_type in playable_types)
         ]
-
-        # result.calculate_children_class()
 
     return result
 
 
 async def async_browse_media_id(
     hub: MediaBrowserHub,
-    item_id: str,
-    playable_types: list[str],
+    item_id: str | None,
+    playable_types: list[str] | None,
     include_children: bool,
 ) -> BrowseMedia:
     """Browses the specified item."""

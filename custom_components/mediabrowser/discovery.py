@@ -54,8 +54,8 @@ def _discover_message(
     )
     all_ip_addresses = [ip[-1][0] for ip in interfaces]
     for ip_address in all_ip_addresses:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.settimeout(timeout)
@@ -68,7 +68,8 @@ def _discover_message(
                 result.append(discovery)
             else:
                 _LOGGER.warning(
-                    "Ignored response because id or address is missing from discovery message received from %s",
+                    "Ignored response because id or address is missing "
+                    + "from discovery message received from %s",
                     ip_address,
                 )
         except TimeoutError:
