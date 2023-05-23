@@ -1,5 +1,6 @@
 """The Media Source implementation for the MediaBrowser integration."""
 
+from typing import Any
 
 from homeassistant.components.media_player import MediaClass
 from homeassistant.components.media_source import (
@@ -10,12 +11,25 @@ from homeassistant.components.media_source import (
 )
 from homeassistant.core import HomeAssistant
 
-from .browse import get_children, get_item
-from .const import DOMAIN, HUB, MEDIA_CLASS_MAP
+from .browse import get_children, get_item, get_stream_url
+from .const import (
+    DATA_HUB,
+    DOMAIN,
+    MEDIA_CLASS_MAP,
+    MEDIA_CLASS_NONE,
+    MEDIA_TYPE_MAP,
+    MEDIA_TYPE_NONE,
+    TITLE_NONE,
+    ImageType,
+    Key,
+    Query,
+    ServerType,
+    Value,
+)
 from .errors import BrowseMediaError
+from .helpers import get_image_url
 from .hub import MediaBrowserHub
 from .icons import EMBY_ICON, JELLYFIN_ICON
-from .models import MBItem
 
 PLAYABLE_MEDIA_TYPES = {"Audio", "Video", "Photo"}
 
@@ -24,7 +38,7 @@ async def async_get_media_source(hass: HomeAssistant) -> MediaSource:
     """Set up MediaBrowser media source."""
 
     entries = hass.config_entries.async_entries(DOMAIN)
-    hubs = [hass.data[DOMAIN][entry.entry_id][HUB] for entry in entries]
+    hubs = [hass.data[DOMAIN][entry.entry_id][DATA_HUB] for entry in entries]
 
     return MBSource(hubs)
 
@@ -46,23 +60,26 @@ class MBSource(MediaSource):
         hub = self.hubs[parts[0]]
 
         media_item = (
-            await hub.async_get_items({"Fields": "MediaSources", "Ids": parts[1]})
-        ).items[0]
+            await hub.async_get_items_raw(
+                {Query.FIELDS: Value.MEDIA_SOURCES, Query.IDS: parts[1]}
+            )
+        )[Key.ITEMS][0]
 
         url: str | None = None
         match media_item.media_type:
-            case "Video":
-                url = _get_video_url(hub, media_item)
-            case "Audio":
-                url = _get_audio_url(hub, media_item.id)
+            case "Video" | "Audio":
+                url, mime_type = await get_stream_url(
+                    hub, parts[1], media_item.get(Key.MEDIA_TYPE)
+                )
             case "Photo":
-                url = _get_photo_url(hub, media_item.id)
+                url = _get_photo_url(hub, parts[1])
+                mime_type = "image/jpeg"
             case _:
                 raise BrowseMediaError(
                     f"Unsupported media type:{media_item.media_type}"
                 )
 
-        if media_item.mime_type is not None and url is not None:
+        if mime_type is not None and url is not None:
             return PlayMedia(url, media_item.mime_type)
 
         raise BrowseMediaError(f"Cannot obtain mime information for {item.identifier}")
@@ -108,31 +125,31 @@ class MBSource(MediaSource):
         return source
 
     async def _async_browse_item(
-        self, hub: MediaBrowserHub, item: MBItem | None, include_children: bool
+        self, hub: MediaBrowserHub, item: dict[str, Any] | None, include_children: bool
     ) -> BrowseMediaSource:
         if item is None:
             media_class = MediaClass.DIRECTORY
-            media_content_type = ""
+            media_content_type = MEDIA_TYPE_NONE
             media_content_id = hub.server_id
             title = hub.server_name
             can_expand = True
             can_play = False
-            thumb = EMBY_ICON if hub.is_emby else JELLYFIN_ICON
+            thumb = EMBY_ICON if hub.server_type == ServerType.EMBY else JELLYFIN_ICON
 
         else:
-            media_class = MEDIA_CLASS_MAP.get(item.type or "") or (
-                MediaClass.DIRECTORY if item.is_folder else None
+            item_type: str = item.get(Key.TYPE, "")
+            media_type: str = item.get(Key.MEDIA_TYPE, MEDIA_TYPE_NONE)
+            is_folder: bool = item.get(Key.IS_FOLDER, False)
+
+            media_class = MEDIA_CLASS_MAP.get(
+                item_type, MediaClass.DIRECTORY if is_folder else MEDIA_CLASS_NONE
             )
-            media_content_type = item.mime_type
-            thumb = (
-                f"{hub.server_url}{item.thumb_url}"
-                if item.thumb_url is not None
-                else None
-            )
-            media_content_id = f"{hub.server_id}/{item.id}"
-            title = item.name
-            can_play = item.media_type in PLAYABLE_MEDIA_TYPES
-            can_expand = item.is_folder
+            media_content_type = MEDIA_TYPE_MAP.get(item_type, item_type)
+            thumb = get_image_url(item, hub.server_url, ImageType.THUMB, True)
+            media_content_id = f"{hub.server_id}/{item.get(Key.ID)}"
+            title = item.get(Key.NAME, TITLE_NONE)
+            can_play = media_type in PLAYABLE_MEDIA_TYPES
+            can_expand = is_folder
 
         result = BrowseMediaSource(
             domain=DOMAIN,
@@ -150,28 +167,11 @@ class MBSource(MediaSource):
             result.children = [
                 await self._async_browse_item(hub, child, False)
                 for child in await get_children(hub, item)
-                if child.is_folder or child.media_type in PLAYABLE_MEDIA_TYPES
+                if child.get(Key.IS_FOLDER, False)
+                or child.get(Key.MEDIA_TYPE, MEDIA_TYPE_NONE) in PLAYABLE_MEDIA_TYPES
             ]
 
         return result
-
-
-def _get_audio_url(hub: MediaBrowserHub, item_id: str) -> str | None:
-    return f"{hub.server_url}/Audio/{item_id}/universal?UserId={hub.user_id}&api_key={hub.api_key}"
-
-
-def _get_video_url(hub: MediaBrowserHub, item: MBItem) -> str | None:
-    media_source = (
-        item.media_sources[0]
-        if item.media_sources is not None and len(item.media_sources) > 0
-        else None
-    )
-    if media_source is not None:
-        return (
-            f"{hub.server_url}/Videos/{item.id}/master.m3u8?"
-            + f"api_key={hub.api_key}&MediaSourceId={media_source.id}"
-        )
-    return None
 
 
 def _get_photo_url(hub: MediaBrowserHub, item_id: str) -> str | None:

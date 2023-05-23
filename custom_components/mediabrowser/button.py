@@ -6,7 +6,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN, HUB
+from .const import DATA_HUB, DOMAIN, ENTITY_TITLE_MAP, EntityType
 from .entity import MediaBrowserEntity
 from .hub import MediaBrowserHub
 
@@ -17,7 +17,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up MediaBrowser buttons."""
-    hub: MediaBrowserHub = hass.data[DOMAIN][entry.entry_id][HUB]
+    hub: MediaBrowserHub = hass.data[DOMAIN][entry.entry_id][DATA_HUB]
     async_add_entities(
         [
             MediaBrowserRescanButton(hub),
@@ -35,8 +35,10 @@ class MediaBrowserRestartButton(MediaBrowserEntity, ButtonEntity):
 
     def __init__(self, hub: MediaBrowserHub) -> None:
         super().__init__(hub)
-        self._attr_name = f"{self.hub.server_name} Restart"
-        self._attr_unique_id = f"{self.hub.server_id}-restart"
+        self._attr_name = (
+            f"{self.hub.server_name} {ENTITY_TITLE_MAP[EntityType.RESTART]}"
+        )
+        self._attr_unique_id = f"{self.hub.server_id}-{EntityType.RESTART}"
         self._attr_icon = "mdi:restart"
 
     async def async_press(self) -> None:
@@ -50,8 +52,10 @@ class MediaBrowserShutdownButton(MediaBrowserEntity, ButtonEntity):
 
     def __init__(self, hub: MediaBrowserHub) -> None:
         super().__init__(hub)
-        self._attr_name = f"{self.hub.server_name} Shutdown"
-        self._attr_unique_id = f"{self.hub.server_id}-shutdown"
+        self._attr_name = (
+            f"{self.hub.server_name} {ENTITY_TITLE_MAP[EntityType.SHUTDOWN]}"
+        )
+        self._attr_unique_id = f"{self.hub.server_id}-{EntityType.SHUTDOWN}"
         self._attr_icon = "mdi:power"
 
     async def async_press(self) -> None:
@@ -65,8 +69,10 @@ class MediaBrowserRescanButton(MediaBrowserEntity, ButtonEntity):
 
     def __init__(self, hub: MediaBrowserHub) -> None:
         super().__init__(hub)
-        self._attr_name = f"{self.hub.server_name} Rescan Libraries"
-        self._attr_unique_id = f"{self.hub.server_id}-rescan"
+        self._attr_name = (
+            f"{self.hub.server_name} {ENTITY_TITLE_MAP[EntityType.RESCAN]}"
+        )
+        self._attr_unique_id = f"{self.hub.server_id}-{EntityType.RESCAN}"
         self._attr_icon = "mdi:database-refresh"
 
     async def async_press(self) -> None:

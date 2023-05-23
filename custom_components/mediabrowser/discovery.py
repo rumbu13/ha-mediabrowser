@@ -2,53 +2,50 @@
 import json
 import logging
 import socket
+from typing import Any
 
-from .models import MBDiscovery, MediaBrowserType
-
-DISCOVERY_TIMEOUT = 1
-DISCOVERY_MESSAGE_EMBY = b"who is EmbyServer?"
-DISCOVERY_MESSAGE_JELLYFIN = b"who is JellyfinServer?"
-DISCOVERY_BROADCAST = "255.255.255.255"
-DISCOVERY_PORT = 7359
+from .const import (
+    DISCOVERY_BROADCAST,
+    DISCOVERY_MESSAGE_EMBY,
+    DISCOVERY_MESSAGE_JELLYFIN,
+    DISCOVERY_PORT,
+    DISCOVERY_TIMEOUT,
+    Key,
+    ServerType,
+)
 
 _LOGGER = logging.getLogger(__package__)
 
 MOCK = True
 
 
-def discover_mb(timeout: float = DISCOVERY_TIMEOUT) -> list[MBDiscovery]:
+def discover_mb(timeout: float = DISCOVERY_TIMEOUT) -> list[dict[str, Any]]:
     """Broadcasts all local networks and waits for a response from Emby or Jellyfin servers."""
     if MOCK:
         return [
-            MBDiscovery(
-                {
-                    "Address": "http://192.168.1.145:8096",
-                    "Id": "33aeee8e703b4e168a84d63fe37b8dfe",
-                    "Name": "Rumbuflix",
-                },
-                MediaBrowserType.EMBY,
-            ),
-            MBDiscovery(
-                {
-                    "Address": "http://192.168.1.145:8097",
-                    "Id": "19a3c6e569704103847360d350995f47",
-                    "Name": "ZOTAC",
-                    "EndpointAddress": None,
-                },
-                MediaBrowserType.JELLYFIN,
-            ),
+            {
+                "Address": "http://192.168.1.145:8096",
+                "Id": "33aeee8e703b4e168a84d63fe37b8dfe",
+                "Name": "Rumbuflix",
+                "Type": ServerType.EMBY,
+            },
+            {
+                "Address": "http://192.168.1.145:8097",
+                "Id": "19a3c6e569704103847360d350995f47",
+                "Name": "ZOTAC",
+                "EndpointAddress": None,
+                "Type": ServerType.JELLYFIN,
+            },
         ]
     return _discover_message(
-        DISCOVERY_MESSAGE_EMBY, MediaBrowserType.EMBY, timeout
-    ) + _discover_message(
-        DISCOVERY_MESSAGE_JELLYFIN, MediaBrowserType.JELLYFIN, timeout
-    )
+        DISCOVERY_MESSAGE_EMBY, ServerType.EMBY, timeout
+    ) + _discover_message(DISCOVERY_MESSAGE_JELLYFIN, ServerType.JELLYFIN, timeout)
 
 
 def _discover_message(
-    message: bytes, server_type: MediaBrowserType, timeout: float = DISCOVERY_TIMEOUT
-) -> list[MBDiscovery]:
-    result: list[MBDiscovery] = []
+    message: bytes, server_type: ServerType, timeout: float = DISCOVERY_TIMEOUT
+) -> list[dict[str, Any]]:
+    result: list[dict[str, Any]] = []
     interfaces = socket.getaddrinfo(
         host=socket.gethostname(), port=None, family=socket.AF_INET
     )
@@ -62,10 +59,10 @@ def _discover_message(
             sock.bind((ip_address, 0))
             sock.sendto(message, (DISCOVERY_BROADCAST, DISCOVERY_PORT))
             data = sock.recv(1024)
-            discovery = MBDiscovery(json.loads(data.decode("utf-8")), server_type)
+            discovery = json.loads(data.decode("utf-8"))
 
-            if discovery.address is not None and discovery.id is not None:
-                result.append(discovery)
+            if Key.ADDRESS in discovery and Key.ID in discovery:
+                result.append(discovery | {"Type": server_type})
             else:
                 _LOGGER.warning(
                     "Ignored response because id or address is missing "

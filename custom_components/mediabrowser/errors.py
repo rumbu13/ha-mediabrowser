@@ -23,5 +23,9 @@ class ConnectError(HomeAssistantError):
     """Error to indicate that a coonection cannot be established."""
 
 
+class MismatchError(HomeAssistantError):
+    """Error to indicate that there is a mismatch between expected and real server unique id."""
+
+
 class BrowseMediaError(HomeAssistantError):
     """Error to indicate that a browsing operation failed."""

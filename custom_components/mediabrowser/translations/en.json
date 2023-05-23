@@ -12,13 +12,19 @@
                 }
             },
             "manual": {
-                "title": "Configure Emby or Jellyfin",
+                "title": "Configuration",
                 "data": {
                     "host": "Host",
                     "port": "Port",
                     "ssl": "Use SSL",
                     "name": "Name",
                     "api_key": "API Key"
+                },
+                "data_description": {
+                    "host": "IP Address or Host name where the Emby/Jellyfin server runs",
+                    "port": "Connection port",
+                    "name": "Use this instead of server name when creating entities",
+                    "api_key": "Go to you Emby/Jellyfin server dashboard, select API Keys under the Advanced menu and generate a new one if necessary"
                 }
             }
         },
@@ -41,7 +47,8 @@
                 "menu_options": {
                     "auth": "Configure authentication",
                     "players": "Media Players options",
-                    "latest": "Configure latest sensors",
+                    "add_sensor": "Add a sensor",
+                    "remove_sensor": "Remove a sensor",
                     "advanced": "Advanced options"
                 }
             },
@@ -50,6 +57,10 @@
                 "data": {
                     "api_key": "API Key",
                     "user": "Impersonate user"
+                },
+                "data_description": {
+                    "api_key": "Go to you Emby/Jellyfin server dashboard, select API Keys under the Advanced menu and generate a new one if necessary",
+                    "user": "Impersonate this user when serving media items"
                 }
             },
             "players": {
@@ -57,25 +68,36 @@
                 "data": {
                     "ignore_web_players": "Ignore web players",
                     "ignore_dlna_players": "Ignore DLNA players",
-                    "ignore_mobile_players": "Ignore mobile players"
+                    "ignore_mobile_players": "Ignore mobile players",
+                    "ignore_app_players": "Ignore application players",
+                    "purge_players": "Auto purge media players",
+                    "upcoming_media": "Provide data for upcoming media card"
+                },
+                "data_description": {
+                    "ignore_web_players": "This is never shown"
                 }
             },
-            "latest": {
-                "title": "Create sensors for",
+            "add_sensor": {
+                "title": "Add a sensor",
                 "data": {
-                    "latest_movies": "Latest movies",
-                    "latest_series": "Latest series",
-                    "latest_songs": "Latest songs",
-                    "latest_music_videos": "Latest music videos",
-                    "latest_photos": "Latest photos",
-                    "latest_videos": "Latest videos",
-                    "latest_books": "Latest books",
-                    "latest_trailers": "Latest trailers"
+                    "type": "Media type",
+                    "library": "Library",
+                    "user": "User"
+                },
+                "data_description": {
+                    "type": "Media type to be monitored",
+                    "library": "Provide information only for the specified library",
+                    "user": "Provide information only for the selected user"
                 }
             },
-            "libraries": {
-                "title": "Create library sensors for",
-                "data": {}
+            "remove_sensor": {
+                "title": "Remove a sensor",
+                "data": {
+                    "latest_remove": "Select a sensor to remove"
+                },
+                "data_description": {
+                    "latest_remove": "The selected sensor will be deleted. It cannot be recovered, but you can recreate it later"
+                }
             },
             "advanced": {
                 "title": "Advanced options",
@@ -84,16 +106,31 @@
                     "client": "Client name",
                     "device_name": "Device name",
                     "device_id": "Device identifier",
-                    "device_version": "Device version"
+                    "device_version": "Device version",
+                    "timeout": "Timeout",
+                    "scan_interval": "Scan interval"
+                },
+                "data_description": {
+                    "name": "Use this instead of server name when creating entities",
+                    "client": "Name of the client to be reported in Emby/Jellyfin server",
+                    "device_name": "Device name to be reported in Emby/Jellyfin server",
+                    "device_id": "Device name to be reported in Emby/Jellyfin server",
+                    "device_version": "Device version to be reported in Emby/Jellyfin server",
+                    "timeout": "How much time to wait (in seconds) to consider that you Emby/Jellyfin server is down",
+                    "scan_interval": "Refresh sensors time interval (seconds). This is used only for library sensors, sessions sensors and media players are updated in real time"
                 }
-            },
-            "error": {
-                "cannot_connect": "Cannot connect",
-                "invalid_auth": "Invalid authentication",
-                "unknown": "Unknown error",
-                "weak_auth": "The provided API Key dows not have enough rights",
-                "timeout": "Timeout while trying to connect to server"
             }
+        },
+        "error": {
+            "cannot_connect": "Cannot connect",
+            "invalid_auth": "Invalid authentication",
+            "unknown": "Unknown error",
+            "weak_auth": "The provided API Key dows not have enough rights",
+            "timeout": "Timeout while trying to connect to server"
+        },
+        "abort": {
+            "no_sensors": "There are no sensors configured",
+            "sensor_already_configured": "This sensor is already configured"
         }
     }
 }

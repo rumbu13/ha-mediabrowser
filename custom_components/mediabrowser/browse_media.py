@@ -1,56 +1,42 @@
-"""Browse implementation for Media Browser (Emby/Jellyfin) integration."""
+""" Browse implementation for Media Browser (Emby/Jellyfin) integration."""
+
 
 import logging
+from typing import Any
 
-from homeassistant.components.media_player import MediaClass, MediaType
+from homeassistant.components.media_player import MediaClass
 from homeassistant.components.media_player.browse_media import BrowseMedia
 
 from .browse import get_children, get_item
-from .const import MEDIA_CLASS_MAP, MEDIA_TYPE_MAP
+from .const import (
+    ID_NONE,
+    MEDIA_CLASS_MAP,
+    MEDIA_CLASS_NONE,
+    MEDIA_TYPE_MAP,
+    MEDIA_TYPE_NONE,
+    PLAYABLE_FOLDERS,
+    TITLE_NONE,
+    TYPE_NONE,
+    ImageType,
+    Key,
+)
+from .helpers import get_image_url
 from .hub import MediaBrowserHub
-from .models import MBItem
 
 _LOGGER = logging.getLogger(__name__)
-
-MEDIA_CLASS_NONE = ""
-MEDIA_TYPE_NONE = ""
-
-CONTENT_TYPE_MAP = {
-    "Audio": MediaType.MUSIC,
-    "AudioBook": MediaType.PODCAST,
-    "Book": MediaType.APP,
-    "Episode": MediaType.EPISODE,
-    "Season": MediaType.SEASON,
-    "Series": MediaType.TVSHOW,
-    "Movie": MediaType.MOVIE,
-    "Playlist": MediaType.PLAYLIST,
-}
-
-PLAYABLE_FOLDERS = {
-    "BoxSet",
-    "Genre",
-    "LiveTvChannel",
-    "ManualPlaylistFolder",
-    "MusicAlbum",
-    "MusicGenre",
-    "PhotoAlbum",
-    "Playlist",
-    "PlaylistFolder",
-    "Season",
-    "Series",
-}
 
 
 async def async_browse_media(
     hub: MediaBrowserHub,
-    item: MBItem | None,
+    item: dict[str, Any] | None,
     playable_types: list[str] | None,
     include_children: bool,
 ) -> BrowseMedia:
     """Browses the specified item."""
+
     if item is None:
         media_class = MediaClass.DIRECTORY
-        media_content_type = ""
+        media_content_type = TYPE_NONE
         media_content_id = "root"
         title = ""
         thumb = None
@@ -58,18 +44,26 @@ async def async_browse_media(
         can_play = False
 
     else:
-        media_class = MEDIA_CLASS_MAP.get(item.type or "") or (
-            MediaClass.DIRECTORY if item.is_folder else MEDIA_CLASS_NONE
+        item_type: str = item.get(Key.TYPE, "")
+        media_type: str = item.get(Key.MEDIA_TYPE, MEDIA_TYPE_NONE)
+        is_folder: bool = item.get(Key.IS_FOLDER, False)
+
+        media_class = MEDIA_CLASS_MAP.get(
+            item_type, MediaClass.DIRECTORY if is_folder else MEDIA_CLASS_NONE
         )
-        media_content_type = MEDIA_TYPE_MAP.get(item.type or "") or ""
-        thumb = item.thumb_url
-        media_content_id = item.id
-        title = item.name or "Unknown"
-        can_play = (item.is_folder and item.type in PLAYABLE_FOLDERS) or (
-            playable_types is not None and item.media_type in playable_types
+        media_content_type = MEDIA_TYPE_MAP.get(item_type, item_type)
+        thumb = (
+            get_image_url(item, hub.server_url, ImageType.THUMB, True)
+            or get_image_url(item, hub.server_url, ImageType.PRIMARY, True)
+            or get_image_url(item, hub.server_url, ImageType.BACKDROP, True)
         )
 
-        can_expand = item.is_folder or False
+        media_content_id = item.get(Key.ID, ID_NONE)
+        title = item.get(Key.NAME, TITLE_NONE)
+        can_play = (is_folder and item_type in PLAYABLE_FOLDERS) or (
+            playable_types is not None and media_type in playable_types
+        )
+        can_expand = is_folder
 
     result = BrowseMedia(
         media_class=media_class,
@@ -78,7 +72,7 @@ async def async_browse_media(
         title=title,
         can_play=can_play,
         can_expand=can_expand,
-        thumbnail=f"{hub.server_url}{thumb}" if thumb is not None else None,
+        thumbnail=thumb,
         children_media_class=None,
     )
 
@@ -86,8 +80,11 @@ async def async_browse_media(
         result.children = [
             await async_browse_media(hub, child, playable_types, False)
             for child in await get_children(hub, item)
-            if child.is_folder
-            or (playable_types is not None and child.media_type in playable_types)
+            if child.get(Key.IS_FOLDER, False)
+            or (
+                playable_types is not None
+                and child.get(Key.MEDIA_TYPE, MEDIA_TYPE_NONE) in playable_types
+            )
         ]
 
     return result

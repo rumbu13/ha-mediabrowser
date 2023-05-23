@@ -1,32 +1,33 @@
 """Browsing helper module."""
 
 import logging
+from typing import Any, Tuple
 
-from .const import VIRTUAL_FOLDER_MAP
+from .const import (
+    DEVICE_PROFILE,
+    VIRTUAL_FILTER_MAP,
+    VIRTUAL_FOLDER_MAP,
+    ItemType,
+    Key,
+    Query,
+    ServerType,
+    Value,
+    VirtualFolder,
+)
 from .errors import BrowseMediaError
 from .hub import MediaBrowserHub
-from .models import MBItem
 
 _LOGGER = logging.getLogger(__name__)
 
-VIRTUAL_FILTER_MAP = {
-    "artists": "ArtistIds",
-    "composers": "ArtistIds",
-    "album_artists": "ArtistIds",
-    "persons": "PersonIds",
-    "genres": "GenreIds",
-    "studios": "StudioIds",
-    "tags": "TagIds",
-    "years": "Years",
-}
 
-
-async def get_children(hub: MediaBrowserHub, item: MBItem | None) -> list[MBItem]:
+async def get_children(
+    hub: MediaBrowserHub, item: dict[str, Any] | None
+) -> list[dict[str, Any]]:
     """Gets children for the specified item."""
     if item is None:
         return await _get_libraries(hub)
 
-    match item.type:
+    match item.get(Key.TYPE):
         case "CollectionFolder":
             return await _get_collection(hub, item)
         case "Virtual":
@@ -45,43 +46,24 @@ async def get_children(hub: MediaBrowserHub, item: MBItem | None) -> list[MBItem
         ):
             return await _get_virtual_children(hub, item)
         case "Playlist":
-            return await _get_playlist_children(hub, item.id)
+            return await _get_playlist_children(hub, item[Key.ID])
 
-    if item.is_folder:
-        return await _get_default_children(hub, item.id)
+    if item.get(Key.IS_FOLDER, False):
+        return await _get_default_children(hub, item[Key.ID])
 
     return []
 
 
-async def _get_libraries(hub: MediaBrowserHub) -> list[MBItem]:
-    if hub.is_emby:
-        try:
-            root: MBItem = (
-                await hub.async_get_items(
-                    {"IncludeItemTypes": "UserRootFolder", "Recursive": "true"}
-                )
-            ).items[0]
-        except IndexError:
-            return []
-
-        libraries = (
-            await hub.async_get_items(
-                {
-                    "ParentId": root.id,
-                    "IncludeItemTypes": "CollectionFolder",
-                }
-            )
-        ).items
-    else:
-        libraries = (await hub.async_get_libraries()).items
-
-    channels = (await hub.async_get_channels()).items
-
-    return sorted(libraries + channels, key=lambda x: x.name or "")
+async def _get_libraries(hub: MediaBrowserHub) -> list[dict[str, Any]]:
+    return sorted(
+        await hub.async_get_libraries_raw(), key=lambda x: x.get(Key.NAME, "")
+    )
 
 
-async def _get_collection(hub: MediaBrowserHub, item: MBItem) -> list[MBItem]:
-    match item.collection_type:
+async def _get_collection(
+    hub: MediaBrowserHub, item: dict[str, Any]
+) -> list[dict[str, Any]]:
+    match item.get(Key.COLLECTION_TYPE):
         case "movies":
             return await _get_movies(hub, item)
         case "tvshows":
@@ -94,393 +76,435 @@ async def _get_collection(hub: MediaBrowserHub, item: MBItem) -> list[MBItem]:
             return await _get_homevideos(hub, item)
         case "musicvideos":
             return await _get_musicvideos(hub, item)
-    return await _get_default_children(hub, item.id)
+    return await _get_default_children(hub, item[Key.ID])
 
 
-async def _get_movies(hub: MediaBrowserHub, library: MBItem) -> list[MBItem]:
-    children = await hub.async_get_items(
+async def _get_movies(
+    hub: MediaBrowserHub, library: dict[str, Any]
+) -> list[dict[str, Any]]:
+    children = await hub.async_get_items_raw(
         {
-            "IncludeItemTypes": "Movie",
-            "Recursive": "true",
-            "ParentId": library.id,
-            "SortBy": "SortName",
-            "SortOrder": "Ascending",
+            Query.INCLUDE_ITEM_TYPES: ItemType.MOVIE,
+            Query.RECURSIVE: Value.TRUE,
+            Query.PARENT_ID: library[Key.ID],
+            Query.SORT_BY: Key.SORT_NAME,
+            Query.SORT_ORDER: Value.ASCENDING,
         }
     )
 
     return [
-        _make_virtual_folder("persons", library.id),
-        _make_virtual_folder("genres", library.id),
-        _make_virtual_folder("studios", library.id),
-        _make_virtual_folder("years", library.id),
-        _make_virtual_folder("prefixes", library.id),
-        _make_virtual_folder("folders", library.id),
-    ] + children.items
+        _make_virtual_folder(VirtualFolder.PERSONS, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.GENRES, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.STUDIOS, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.YEARS, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.PREFIXES, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.FOLDERS, library[Key.ID]),
+    ] + children.get(Key.ITEMS, [])
 
 
-async def _get_tvshows(hub: MediaBrowserHub, library: MBItem) -> list[MBItem]:
-    children = await hub.async_get_items(
+async def _get_tvshows(
+    hub: MediaBrowserHub, library: dict[str, Any]
+) -> list[dict[str, Any]]:
+    children = await hub.async_get_items_raw(
         {
-            "IncludeItemTypes": "Series",
-            "Recursive": "true",
-            "ParentId": library.id,
-            "SortBy": "SortName",
-            "SortOrder": "Ascending",
+            Query.INCLUDE_ITEM_TYPES: ItemType.SERIES,
+            Query.RECURSIVE: Value.TRUE,
+            Query.PARENT_ID: library[Key.ID],
+            Query.SORT_BY: Key.SORT_NAME,
+            Query.SORT_ORDER: Value.ASCENDING,
         }
     )
 
     return [
-        _make_virtual_folder("persons", library.id),
-        _make_virtual_folder("genres", library.id),
-        _make_virtual_folder("studios", library.id),
-        _make_virtual_folder("prefixes", library.id),
-        _make_virtual_folder("years", library.id),
-        _make_virtual_folder("folders", library.id),
-    ] + children.items
+        _make_virtual_folder(VirtualFolder.PERSONS, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.GENRES, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.STUDIOS, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.YEARS, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.PREFIXES, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.FOLDERS, library[Key.ID]),
+    ] + children.get(Key.ITEMS, [])
 
 
-async def _get_music(hub: MediaBrowserHub, library: MBItem) -> list[MBItem]:
+async def _get_music(
+    hub: MediaBrowserHub, library: dict[str, Any]
+) -> list[dict[str, Any]]:
     # emby/jellyfin bug: needs User/Items, Items ignores ParentId
-    albums = await hub.async_get_user_items(
+    albums = await hub.async_get_user_items_raw(
+        hub.server_admin_id,
         {
-            "IncludeItemTypes": "MusicAlbum",
-            "Recursive": "true",
-            "ParentId": library.id,
-            "SortBy": "SortName",
-            "SortOrder": "Ascending",
-        }
+            Query.INCLUDE_ITEM_TYPES: ItemType.MUSIC_ALBUM,
+            Query.RECURSIVE: Value.TRUE,
+            Query.PARENT_ID: library[Key.ID],
+            Query.SORT_BY: Key.SORT_NAME,
+            Query.SORT_ORDER: Value.ASCENDING,
+        },
     )
 
-    videos = await hub.async_get_items(
+    videos = await hub.async_get_items_raw(
         {
-            "IncludeItemTypes": "MusicVideo",
-            "Recursive": "true",
-            "ParentId": library.id,
-            "SortBy": "SortName",
-            "SortOrder": "Ascending",
+            Query.INCLUDE_ITEM_TYPES: ItemType.MUSIC_VIDEO,
+            Query.RECURSIVE: Value.TRUE,
+            Query.PARENT_ID: library[Key.ID],
+            Query.SORT_BY: Key.SORT_NAME,
+            Query.SORT_ORDER: Value.ASCENDING,
         }
     )
 
     return [
-        _make_virtual_folder("artists", library.id),
-        _make_virtual_folder("album_artists", library.id),
-        _make_virtual_folder("composers", library.id),
-        _make_virtual_folder("genres", library.id),
-        _make_virtual_folder("studios", library.id),
-        _make_virtual_folder("prefixes", library.id),
-        _make_virtual_folder("years", library.id),
-        _make_virtual_folder("playlists", library.id),
-        _make_virtual_folder("folders", library.id),
+        _make_virtual_folder(VirtualFolder.ARTISTS, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.ALBUM_ARTISTS, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.COMPOSERS, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.GENRES, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.STUDIOS, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.PREFIXES, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.YEARS, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.PLAYLISTS, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.FOLDERS, library[Key.ID]),
     ] + sorted(
-        albums.items + videos.items,
-        key=lambda x: x.sort_name if x.sort_name is not None else x.name or "",
+        albums.get(Key.ITEMS, []) + videos.get(Key.ITEMS, []),
+        key=lambda x: x.get(Key.SORT_NAME, x.get(Key.NAME, "")),
     )
 
 
-async def _get_musicvideos(hub: MediaBrowserHub, library: MBItem) -> list[MBItem]:
-    children = await hub.async_get_items(
+async def _get_musicvideos(
+    hub: MediaBrowserHub, library: dict[str, Any]
+) -> list[dict[str, Any]]:
+    children = await hub.async_get_items_raw(
         {
-            "IncludeItemTypes": "MusicVideo",
-            "Recursive": "true",
-            "ParentId": library.id,
-            "SortBy": "SortName",
-            "SortOrder": "Ascending",
+            Query.INCLUDE_ITEM_TYPES: ItemType.MUSIC_VIDEO,
+            Query.RECURSIVE: Value.TRUE,
+            Query.PARENT_ID: library[Key.ID],
+            Query.SORT_BY: Key.SORT_NAME,
+            Query.SORT_ORDER: Value.ASCENDING,
         }
     )
 
     return [
-        _make_virtual_folder("artists", library.id),
-        _make_virtual_folder("genres", library.id),
-        _make_virtual_folder("prefixes", library.id),
-        _make_virtual_folder("years", library.id),
-        _make_virtual_folder("folders", library.id),
-    ] + children.items
+        _make_virtual_folder(VirtualFolder.ARTISTS, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.GENRES, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.PERSONS, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.YEARS, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.PREFIXES, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.FOLDERS, library[Key.ID]),
+    ] + children.get(Key.ITEMS, [])
 
 
-async def _get_audio_books(hub: MediaBrowserHub, library: MBItem) -> list[MBItem]:
+async def _get_audio_books(
+    hub: MediaBrowserHub, library: dict[str, Any]
+) -> list[dict[str, Any]]:
     # emby/jellyfin bug: needs User/Items, Items ignores ParentId
-    children = await hub.async_get_user_items(
+    children = await hub.async_get_user_items_raw(
+        hub.server_admin_id,
         {
-            "IncludeItemTypes": "MusicAlbum",
-            "Recursive": "true",
-            "ParentId": library.id,
-            "SortBy": "SortName",
-            "SortOrder": "Ascending",
-        }
+            Query.INCLUDE_ITEM_TYPES: ItemType.MUSIC_ALBUM,
+            Query.RECURSIVE: Value.TRUE,
+            Query.PARENT_ID: library[Key.ID],
+            Query.SORT_BY: Key.SORT_NAME,
+            Query.SORT_ORDER: Value.ASCENDING,
+        },
     )
 
     return [
-        _make_virtual_folder("artists", library.id),
-        _make_virtual_folder("genres", library.id),
-        _make_virtual_folder("prefixes", library.id),
-        _make_virtual_folder("years", library.id),
-        _make_virtual_folder("folders", library.id),
-    ] + children.items
+        _make_virtual_folder(VirtualFolder.ARTISTS, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.GENRES, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.PERSONS, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.YEARS, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.PREFIXES, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.FOLDERS, library[Key.ID]),
+    ] + children.get(Key.ITEMS, [])
 
 
-async def _get_homevideos(hub: MediaBrowserHub, library: MBItem) -> list[MBItem]:
+async def _get_homevideos(
+    hub: MediaBrowserHub, library: dict[str, Any]
+) -> list[dict[str, Any]]:
     children = [
-        _make_virtual_folder("videos", library.id),
-        _make_virtual_folder("photos", library.id),
-        _make_virtual_folder("folders", library.id),
+        _make_virtual_folder(VirtualFolder.VIDEOS, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.PHOTOS, library[Key.ID]),
+        _make_virtual_folder(VirtualFolder.FOLDERS, library[Key.ID]),
     ]
 
-    if hub.is_emby:
-        children.append(_make_virtual_folder("tags", library.id))
+    if hub.server_type == ServerType.EMBY:
+        children.append(_make_virtual_folder(VirtualFolder.TAGS, library[Key.ID]))
 
     return children
 
 
-async def _get_default_children(hub: MediaBrowserHub, parent_id: str) -> list[MBItem]:
-    children = await hub.async_get_items(
+async def _get_default_children(
+    hub: MediaBrowserHub, parent_id: str
+) -> list[dict[str, Any]]:
+    children = await hub.async_get_items_raw(
         {
-            "Recursive": "false",
-            "ParentId": parent_id,
-            "SortBy": "IsFolder,Filename",
-            "SortOrder": "Ascending",
+            Query.RECURSIVE: Value.FALSE,
+            Query.PARENT_ID: parent_id,
+            Query.SORT_BY: ",".join([Key.IS_FOLDER, Key.FILENAME]),
+            Query.SORT_ORDER: Value.ASCENDING,
         }
     )
-    return children.items
+    return children.get(Key.ITEMS, [])
 
 
-async def _get_playlist_children(hub: MediaBrowserHub, parent_id: str) -> list[MBItem]:
-    children = await hub.async_get_items(
+async def _get_playlist_children(
+    hub: MediaBrowserHub, parent_id: str
+) -> list[dict[str, Any]]:
+    children = await hub.async_get_items_raw(
         {
-            "Recursive": "false",
-            "ParentId": parent_id,
-            "SortBy": "ListItemOrder",
-            "SortOrder": "Ascending",
+            Query.RECURSIVE: Value.FALSE,
+            Query.PARENT_ID: parent_id,
+            Query.SORT_BY: Key.LIST_ITEM_ORDER,
+            Query.SORT_ORDER: Value.ASCENDING,
         }
     )
-    return children.items
+    return children.get(Key.ITEMS, [])
 
 
-async def _get_virtual_folder(hub: MediaBrowserHub, item: MBItem) -> list[MBItem]:
-    parts = item.id.split("/")
+async def _get_virtual_folder(
+    hub: MediaBrowserHub, item: dict[str, Any]
+) -> list[dict[str, Any]]:
+    parts = item[Key.ID].split("/")
     match parts[0]:
-        case "artists":
+        case VirtualFolder.ARTISTS:
             return await _get_artists(hub, parts[1])
-        case "album_artists":
+        case VirtualFolder.ALBUM_ARTISTS:
             return await _get_album_artists(hub, parts[1])
-        case "composers":
+        case VirtualFolder.COMPOSERS:
             return await _get_composers(hub, parts[1])
-        case "persons":
+        case VirtualFolder.PERSONS:
             return await _get_persons(hub, parts[1])
-        case "genres":
+        case VirtualFolder.GENRES:
             return await _get_genres(hub, parts[1])
-        case "studios":
+        case VirtualFolder.STUDIOS:
             return await _get_studios(hub, parts[1])
-        case "prefixes":
+        case VirtualFolder.PREFIXES:
             return await _get_prefixes(hub, parts[1])
-        case "years":
+        case VirtualFolder.YEARS:
             return await _get_years(hub, parts[1])
-        case "folders":
+        case VirtualFolder.FOLDERS:
             return await _get_default_children(hub, parts[1])
-        case "videos":
+        case VirtualFolder.VIDEOS:
             return await _get_videos(hub, parts[1])
-        case "photos":
+        case VirtualFolder.PHOTOS:
             return await _get_photos(hub, parts[1])
-        case "tags":
+        case VirtualFolder.TAGS:
             return await _get_tags(hub, parts[1])
-        case "playlists":
+        case VirtualFolder.PLAYLISTS:
             return await _get_playlists(hub, parts[1])
 
-    raise BrowseMediaError(f"Unsupported virtual folder: {item.id}")
+    raise BrowseMediaError(f"Unsupported virtual folder: {item[Key.ID]}")
 
 
-async def _get_playlists(hub: MediaBrowserHub, parent_id: str) -> list[MBItem]:
-    children = await hub.async_get_items(
+async def _get_playlists(hub: MediaBrowserHub, parent_id: str) -> list[dict[str, Any]]:
+    children = await hub.async_get_items_raw(
         {
-            "Recursive": "true",
-            "ParentId": parent_id,
-            "SortBy": "SortName",
-            "SortOrder": "Ascending",
-            "IncludeItemTypes": "Playlist",
+            Query.RECURSIVE: Value.TRUE,
+            Query.PARENT_ID: parent_id,
+            Query.SORT_BY: Key.SORT_NAME,
+            Query.SORT_ORDER: Value.ASCENDING,
+            Query.INCLUDE_ITEM_TYPES: ItemType.PLAYLIST,
         }
     )
-    return children.items
+    return children.get(Key.ITEMS, [])
 
 
-async def _get_videos(hub: MediaBrowserHub, parent_id: str) -> list[MBItem]:
-    children = await hub.async_get_items(
+async def _get_videos(hub: MediaBrowserHub, parent_id: str) -> list[dict[str, Any]]:
+    children = await hub.async_get_items_raw(
         {
-            "Recursive": "true",
-            "ParentId": parent_id,
-            "SortBy": "SortName",
-            "SortOrder": "Ascending",
-            "IncludeItemTypes": "Video",
+            Query.RECURSIVE: Value.TRUE,
+            Query.PARENT_ID: parent_id,
+            Query.SORT_BY: Key.SORT_NAME,
+            Query.SORT_ORDER: Value.ASCENDING,
+            Query.INCLUDE_ITEM_TYPES: ItemType.VIDEO,
         }
     )
-    return children.items
+    return children.get(Key.ITEMS, [])
 
 
-async def _get_photos(hub: MediaBrowserHub, parent_id: str) -> list[MBItem]:
-    children = await hub.async_get_items(
+async def _get_photos(hub: MediaBrowserHub, parent_id: str) -> list[dict[str, Any]]:
+    children = await hub.async_get_items_raw(
         {
-            "Recursive": "true",
-            "ParentId": parent_id,
-            "SortBy": "SortName",
-            "SortOrder": "Ascending",
-            "IncludeItemTypes": "Photo",
+            Query.RECURSIVE: Value.TRUE,
+            Query.PARENT_ID: parent_id,
+            Query.SORT_BY: Key.SORT_NAME,
+            Query.SORT_ORDER: Value.ASCENDING,
+            Query.INCLUDE_ITEM_TYPES: ItemType.PHOTO,
         }
     )
-    return children.items
+    return children.get(Key.ITEMS, [])
 
 
-async def _get_tags(hub: MediaBrowserHub, parent_id: str) -> list[MBItem]:
-    children = await hub.async_get_items(
+async def _get_tags(hub: MediaBrowserHub, parent_id: str) -> list[dict[str, Any]]:
+    children = await hub.async_get_items_raw(
         {
-            "Recursive": "true",
-            "ParentId": parent_id,
-            "SortBy": "SortName",
-            "SortOrder": "Ascending",
-            "IncludeItemTypes": "Tag",
+            Query.RECURSIVE: Value.TRUE,
+            Query.PARENT_ID: parent_id,
+            Query.SORT_BY: Key.SORT_NAME,
+            Query.SORT_ORDER: Value.ASCENDING,
+            Query.INCLUDE_ITEM_TYPES: ItemType.TAG,
         }
     )
-    return _make_virtual_subfolders("tags", children.items, parent_id)
+    return _make_virtual_subfolders(
+        VirtualFolder.TAGS, children.get(Key.ITEMS, []), parent_id
+    )
 
 
-async def _get_artists(hub: MediaBrowserHub, parent_id: str) -> list[MBItem]:
+async def _get_artists(hub: MediaBrowserHub, parent_id: str) -> list[dict[str, Any]]:
     children = await hub.async_get_artists(
         {
-            "Recursive": "true",
-            "ParentId": parent_id,
-            "SortBy": "SortName",
-            "SortOrder": "Ascending",
-            "ArtistType": "Artist,AlbumArtist",
+            Query.RECURSIVE: Value.TRUE,
+            Query.PARENT_ID: parent_id,
+            Query.SORT_BY: Key.SORT_NAME,
+            Query.SORT_ORDER: Value.ASCENDING,
+            Query.ARTIST_TYPE: ",".join([Value.ARTIST, Value.COMPOSER]),
         }
     )
 
-    return _make_virtual_subfolders("artists", children.items, parent_id)
+    return _make_virtual_subfolders(
+        VirtualFolder.ARTISTS, children.get(Key.ITEMS, []), parent_id
+    )
 
 
-async def _get_composers(hub: MediaBrowserHub, parent_id: str) -> list[MBItem]:
+async def _get_composers(hub: MediaBrowserHub, parent_id: str) -> list[dict[str, Any]]:
     children = await hub.async_get_artists(
         {
-            "Recursive": "true",
-            "ParentId": parent_id,
-            "SortBy": "SortName",
-            "SortOrder": "Ascending",
-            "ArtistType": "Composer",
+            Query.RECURSIVE: Value.TRUE,
+            Query.PARENT_ID: parent_id,
+            Query.SORT_BY: Key.SORT_NAME,
+            Query.SORT_ORDER: Value.ASCENDING,
+            Query.ARTIST_TYPE: Value.COMPOSER,
         }
     )
 
-    return _make_virtual_subfolders("composers", children.items, parent_id)
+    return _make_virtual_subfolders(
+        VirtualFolder.COMPOSERS, children.get(Key.ITEMS, []), parent_id
+    )
 
 
-async def _get_album_artists(hub: MediaBrowserHub, parent_id: str) -> list[MBItem]:
+async def _get_album_artists(
+    hub: MediaBrowserHub, parent_id: str
+) -> list[dict[str, Any]]:
     children = await hub.async_get_artists(
         {
-            "Recursive": "true",
-            "ParentId": parent_id,
-            "SortBy": "SortName",
-            "SortOrder": "Ascending",
-            "ArtistType": "AlbumArtist",
+            Query.RECURSIVE: Value.TRUE,
+            Query.PARENT_ID: parent_id,
+            Query.SORT_BY: Key.SORT_NAME,
+            Query.SORT_ORDER: Value.ASCENDING,
+            Query.ARTIST_TYPE: Value.ALBUM_ARTIST,
         }
     )
 
-    return _make_virtual_subfolders("album_artists", children.items, parent_id)
+    return _make_virtual_subfolders(
+        VirtualFolder.COMPOSERS, children.get(Key.ITEMS, []), parent_id
+    )
 
 
-async def _get_persons(hub: MediaBrowserHub, parent_id: str) -> list[MBItem]:
+async def _get_persons(hub: MediaBrowserHub, parent_id: str) -> list[dict[str, Any]]:
     children = await hub.async_get_persons(
         {
-            "Recursive": "true",
-            "ParentId": parent_id,
-            "SortBy": "SortName",
-            "SortOrder": "Ascending",
+            Query.RECURSIVE: Value.TRUE,
+            Query.PARENT_ID: parent_id,
+            Query.SORT_BY: Key.SORT_NAME,
+            Query.SORT_ORDER: Value.ASCENDING,
         }
     )
 
-    return _make_virtual_subfolders("persons", children.items, parent_id)
+    return _make_virtual_subfolders(
+        VirtualFolder.PERSONS, children.get(Key.ITEMS, []), parent_id
+    )
 
 
-async def _get_genres(hub: MediaBrowserHub, parent_id: str) -> list[MBItem]:
+async def _get_genres(hub: MediaBrowserHub, parent_id: str) -> list[dict[str, Any]]:
     children = await hub.async_get_genres(
         {
-            "Recursive": "true",
-            "ParentId": parent_id,
-            "SortBy": "SortName",
-            "SortOrder": "Ascending",
+            Query.RECURSIVE: Value.TRUE,
+            Query.PARENT_ID: parent_id,
+            Query.SORT_BY: Key.SORT_NAME,
+            Query.SORT_ORDER: Value.ASCENDING,
         }
     )
 
-    return _make_virtual_subfolders("genres", children.items, parent_id)
+    return _make_virtual_subfolders(
+        VirtualFolder.GENRES, children.get(Key.ITEMS, []), parent_id
+    )
 
 
-async def _get_prefixes(hub: MediaBrowserHub, parent_id: str) -> list[MBItem]:
+async def _get_prefixes(hub: MediaBrowserHub, parent_id: str) -> list[dict[str, Any]]:
     children = await hub.async_get_prefixes(
         {
-            "ParentId": parent_id,
-            "SortBy": "SortName",
-            "SortOrder": "Ascending",
+            Query.PARENT_ID: parent_id,
+            Query.SORT_BY: Key.SORT_NAME,
+            Query.SORT_ORDER: Value.ASCENDING,
         }
     )
 
-    return _make_virtual_subfolders("prefixes", children, parent_id)
+    return _make_virtual_subfolders(VirtualFolder.PREFIXES, children, parent_id)
 
 
-async def _get_years(hub: MediaBrowserHub, parent_id: str) -> list[MBItem]:
+async def _get_years(hub: MediaBrowserHub, parent_id: str) -> list[dict[str, Any]]:
     children = await hub.async_get_years(
         {
-            "Recursive": "true",
-            "ParentId": parent_id,
-            "SortBy": "SortName",
-            "SortOrder": "Ascending",
+            Query.RECURSIVE: Value.TRUE,
+            Query.PARENT_ID: parent_id,
+            Query.SORT_BY: Key.SORT_NAME,
+            Query.SORT_ORDER: Value.ASCENDING,
         }
     )
 
-    return _make_virtual_subfolders("years", children.items, parent_id)
+    return _make_virtual_subfolders(
+        VirtualFolder.YEARS, children.get(Key.ITEMS, []), parent_id
+    )
 
 
-async def _get_studios(hub: MediaBrowserHub, parent_id: str) -> list[MBItem]:
+async def _get_studios(hub: MediaBrowserHub, parent_id: str) -> list[dict[str, Any]]:
     children = await hub.async_get_studios(
         {
-            "Recursive": "true",
-            "ParentId": parent_id,
-            "SortBy": "SortName",
-            "SortOrder": "Ascending",
+            Query.RECURSIVE: Value.TRUE,
+            Query.PARENT_ID: parent_id,
+            Query.SORT_BY: Key.SORT_NAME,
+            Query.SORT_ORDER: Value.ASCENDING,
         }
     )
 
-    return _make_virtual_subfolders("studios", children.items, parent_id)
+    return _make_virtual_subfolders(
+        VirtualFolder.STUDIOS, children.get(Key.ITEMS, []), parent_id
+    )
 
 
-def _make_virtual_folder(virtual_id: str, parent_id: str) -> MBItem:
-    return MBItem(
+def _make_virtual_folder(virtual_id: str, parent_id: str) -> dict[str, Any]:
+    return dict[str, Any](
         {
-            "Id": f"{virtual_id}/{parent_id}",
-            "Name": VIRTUAL_FOLDER_MAP[virtual_id],
-            "ParentId": parent_id,
-            "Type": "Virtual",
-            "IsFolder": "true",
+            Key.ID: f"{virtual_id}/{parent_id}",
+            Key.NAME: VIRTUAL_FOLDER_MAP[virtual_id],
+            Key.PARENT_ID: parent_id,
+            Key.TYPE: "Virtual",
+            Key.IS_FOLDER: "true",
         }
     )
 
 
-def _make_virtual_subfolder(virtual_id: str, item: MBItem, parent_id: str) -> MBItem:
+def _make_virtual_subfolder(
+    virtual_id: str, item: dict[str, Any], parent_id: str
+) -> dict[str, Any]:
     result = item
     if virtual_id in ["years", "prefixes"]:
-        result.id = f"{virtual_id}/{parent_id}/{item.name}"
+        result[Key.ID] = f"{virtual_id}/{parent_id}/{item[Key.NAME]}"
     else:
-        result.id = f"{virtual_id}/{parent_id}/{item.id}"
-    result.is_folder = True
+        result[Key.ID] = f"{virtual_id}/{parent_id}/{item[Key.ID]}"
+    result[Key.IS_FOLDER] = True
     return result
 
 
 def _make_virtual_subfolders(
-    virtual_id: str, items: list[MBItem], parent_id: str
-) -> list[MBItem]:
+    virtual_id: str, items: list[dict[str, Any]], parent_id: str
+) -> list[dict[str, Any]]:
     return [_make_virtual_subfolder(virtual_id, item, parent_id) for item in items]
 
 
-async def get_item(hub: MediaBrowserHub, item_id: str) -> MBItem:
+async def get_item(hub: MediaBrowserHub, item_id: str) -> dict[str, Any]:
     """Parses a item identifier and gets the corresponding item."""
     parts = item_id.split("/")
     if len(parts) == 1:
         try:
-            return (await hub.async_get_items({"Ids": item_id})).items[0]
-        except IndexError as idx:
+            return (await hub.async_get_items_raw({"Ids": item_id}))[Key.ITEMS][0]
+        except (KeyError, IndexError) as idx:
             raise BrowseMediaError(f"Cannot find item {item_id}") from idx
 
     if len(parts) == 2:
@@ -489,46 +513,54 @@ async def get_item(hub: MediaBrowserHub, item_id: str) -> MBItem:
     if len(parts) == 3:
         match parts[0]:
             case "prefixes":
-                item = MBItem({"Id": parts[2], "Name": parts[2], "Type": "Prefix"})
+                item = dict[str, Any](
+                    {Key.ID: parts[2], Key.NAME: parts[2], Key.TYPE: "Prefix"}
+                )
             case "years":
-                item = MBItem({"Id": parts[2], "Name": parts[2], "Type": "Year"})
+                item = dict[str, Any](
+                    {Key.ID: parts[2], Key.NAME: parts[2], Key.TYPE: "Year"}
+                )
             case _:
                 try:
-                    item = (await hub.async_get_items({"Ids": parts[2]})).items[0]
-                except IndexError as idx:
+                    item = (await hub.async_get_items_raw({"Ids": parts[2]}))[
+                        Key.ITEMS
+                    ][0]
+                except (KeyError, IndexError) as idx:
                     raise BrowseMediaError(f"Cannot find item {item_id}") from idx
         return _make_virtual_subfolder(parts[0], item, parts[1])
 
     raise BrowseMediaError(f"Invalid item identifier {item_id}")
 
 
-async def _get_virtual_children(hub: MediaBrowserHub, item: MBItem) -> list[MBItem]:
-    query = {
-        "Recursive": "true",
-        "SortBy": "SortName",
-        "SortOrder": "Ascending",
+async def _get_virtual_children(
+    hub: MediaBrowserHub, item: dict[str, Any]
+) -> list[dict[str, Any]]:
+    query: dict[str, str] = {
+        Query.RECURSIVE: Value.TRUE,
+        Query.SORT_BY: Key.SORT_NAME,
+        Query.SORT_ORDER: Value.ASCENDING,
     }
-    parts = item.id.split("/")
-    query["ParentId"] = parts[1]
+    parts = item[Key.ID].split("/")
+    query[Key.PARENT_ID] = parts[1]
     if parts[0] in VIRTUAL_FILTER_MAP:
         query[VIRTUAL_FILTER_MAP[parts[0]]] = parts[2]
     else:
         match parts[0]:
             case "prefixes":
-                query["NameStartsWith"] = parts[2]
+                query[Query.NAME_STARTS_WITH] = parts[2]
             case _:
                 raise BrowseMediaError(f"Unknown virtual folder type: {parts[0]}")
 
-    library = (await hub.async_get_items({"Ids": parts[1]})).items[0]
-    match library.collection_type:
+    library = (await hub.async_get_items_raw({"Ids": parts[1]}))[Key.ITEMS][0]
+    match library[Key.COLLECTION_TYPE]:
         case "movies":
-            query["IncludeItemTypes"] = "Movie"
+            query[Query.INCLUDE_ITEM_TYPES] = "Movie"
         case "tvshows":
-            query["IncludeItemTypes"] = "Series"
+            query[Query.INCLUDE_ITEM_TYPES] = "Series"
         case "music" | "audiobooks":
-            query["IncludeItemTypes"] = "MusicAlbum"
+            query[Query.INCLUDE_ITEM_TYPES] = "MusicAlbum"
         case "musicvideos":
-            query["IncludeItemTypes"] = "MusicVideo"
+            query[Query.INCLUDE_ITEM_TYPES] = "MusicVideo"
         case "homevideos":
             pass
         case _:
@@ -536,4 +568,43 @@ async def _get_virtual_children(hub: MediaBrowserHub, item: MBItem) -> list[MBIt
                 f"Unsupported virtual collection type: {library.collection_type}"
             )
 
-    return (await hub.async_get_items(query)).items
+    return (await hub.async_get_items_raw(query))[Key.ITEMS]
+
+
+async def get_stream_url(
+    hub: MediaBrowserHub, item_id: str, item_media_type: str
+) -> Tuple[str | None, str | None]:
+    """get a stream url for the specified item_id"""
+    url: str | None = None
+    mime_type: str | None = None
+
+    info = await hub.async_playback_info(item_id)
+
+    if Key.MEDIA_SOURCES in info:
+        direct_stream: bool = False
+        bitrate: int = 0
+        best: dict[str, Any] | None = None
+        for source in info[Key.MEDIA_SOURCES]:
+            current_ds: bool = source.get(Key.SUPPORTS_DIRECT_STREAM, False)
+            current_br: int = int(source.get(Key.BITRATE, 0))
+            if (
+                (current_ds and not direct_stream)
+                or (current_ds and direct_stream and current_br > bitrate)
+                or (not current_ds and not direct_stream and current_br > bitrate)
+            ):
+                best = source
+                bitrate = current_br
+                direct_stream = current_ds
+
+        if best is not None:
+            if best.get(Key.SUPPORTS_DIRECT_STREAM, False):
+                mime_type = f"{item_media_type}/{best.get(Key.CONTAINER)}"
+                url = (
+                    f'{hub.server_url}/{"Audio" if item_media_type == "Audio" else "Videos"}'
+                    + f'/{item_id}/stream?static=true&MediaSourceId={best["Id"]}&api_key={hub.api_key}'
+                )
+            elif best.get(Key.SUPPORTS_TRANSCODING, False):
+                url = f"{hub.server_url}{best[Key.TRANSCODING_URL]}"
+                mime_type = f"{item_media_type}/{best.get(Key.TRANSCODING_CONTAINER, best.get(Key.CONTAINER))}"
+
+    return (url, mime_type)

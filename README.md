@@ -20,9 +20,12 @@ This integration support both media server types. The following components are i
 - [Media Player][mediaplayer], one for each connected session
 - [Session Sensor][sensor] for active sessions
 - [Library Sensor][sensor], one for each library
-- [Upcoming Media Sensor][sensor] one for each media type
+- [Latest Media Sensor][sensor] one for each media type
 - [Server Button][button] for rescanning, rebooting or stopping your server
 - [Play Media Service][play_media] allowing you to play anything from your libraries based on various search criteria
+
+
+
 
 
 ## Installation
@@ -37,7 +40,7 @@ This integration support both media server types. The following components are i
 
 ## Configuration
 
-Configuration is done using user interface. The integration will try to detect automatically your server settings. 
+Configuration is done using user interface. The integration will try to detect automatically your server settings.
 If more than one server is found, a selection dialog will be displayed.
 
 |Field|Example|Explanation|
@@ -47,8 +50,6 @@ If more than one server is found, a selection dialog will be displayed.
 |`Use_SSL`|-|Check if your server uses a SSL connection
 |`API_Key`|fe6e72be02e04f2586cad47aca9077f9|API Key used to connect
 |`Name`|My Flix|Optional name of you server. This will be used when creating entities or browsing media
-
-
 
 _Troubleshoting: in order to detect your Emby or Jellyfin servers, please configure your server firewall to allow UDP incoming packets on port 7359_
 

@@ -6,14 +6,7 @@ from homeassistant.helpers.device_registry import DeviceEntryType
 from homeassistant.helpers.entity import DeviceInfo, Entity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import (
-    DASHBOARD_EMBY,
-    DASHBOARD_JELLYFIN,
-    DOMAIN,
-    MANUFACTURER_EMBY,
-    MANUFACTURER_JELLYFIN,
-    MANUFACTURER_UNKNOWN,
-)
+from .const import DASHBOARD_MAP, DOMAIN, MANUFACTURER_MAP, Manufacturer
 from .coordinator import MediaBrowserPollCoordinator, MediaBrowserPushCoordinator
 from .hub import MediaBrowserHub
 
@@ -61,17 +54,9 @@ def _get_device_info(hub: MediaBrowserHub) -> DeviceInfo:
     return DeviceInfo(
         entry_type=DeviceEntryType.SERVICE,
         identifiers={(DOMAIN, hub.server_id or "")},
-        manufacturer=MANUFACTURER_EMBY
-        if hub.is_emby
-        else MANUFACTURER_JELLYFIN
-        if hub.is_jellyfin
-        else MANUFACTURER_UNKNOWN,
+        manufacturer=MANUFACTURER_MAP.get(hub.server_type, Manufacturer.UNKNOWN),
         name=hub.server_name,
         sw_version=hub.server_version,
         model=f"{hub.server_name} ({hub.server_os})",
-        configuration_url=f"{hub.server_url}{DASHBOARD_EMBY}"
-        if hub.is_emby
-        else f"{hub.server_url}{DASHBOARD_JELLYFIN}"
-        if hub.is_jellyfin
-        else None,
+        configuration_url=f"{hub.server_url}{DASHBOARD_MAP.get(hub.server_type, '')}",
     )
