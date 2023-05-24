@@ -59,10 +59,22 @@ Send a message to a session.
 
 |Service data attribute|Optional|Description|
 |-|-|-|
-|`target`|no|Any `device`, `entity` or `area` that is part of the mediabrowser integration|
+|`target`|no|Any `device_id`, `entity_id` or `area_id` that is supported of the mediabrowser integration|
 |`text`|no|The message content
 |`title`|no|The message title
 |`timeout`|yes|The message timeout. If omitted the user will have to confirm viewing the message|
+
+Example:
+
+```yaml
+service: mediabrowser.send_message
+data:
+  text: It is too late, please turn off your TV and go to sleep
+  header: Parental Control
+  timeout: 15
+target:
+  entity_id: media_player.myflix_childroom
+```
 
 ## Contributions are welcome!
 
