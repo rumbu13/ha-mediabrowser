@@ -43,6 +43,8 @@ This integration support both media server types. The following components are i
 Configuration is done using user interface. The integration will try to detect automatically your server settings.
 If more than one server is found, a selection dialog will be displayed.
 
+![select server_step](assets/select_server.png "Select server")
+
 |Field|Example|Explanation|
 |--|--|--|
 |`Host`|192.168.1.1|Host name or IP address of your server|
@@ -126,3 +128,4 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 
 [emby-command]: http://swagger.emby.media/?staticview=true#/SessionsService/postSessionsByIdCommand
 [jellyfin-command]: https://api.jellyfin.org/#tag/Session/operation/SendGeneralCommand
+[config-select-server]: assets/select_server.png
