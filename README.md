@@ -46,7 +46,7 @@ Configuration is done using user interface. The integration will try to detect a
 
 After selecting one of the available servers or if the integration discovers only one instance running in your network, the configuration dialog is diaplayed. Please note that `Name` or `API Key` can be changed later. In order to change the `host` or `port`, the configuration must be deleted and created again.
 
-![config_manual_step](assets/config manual.png "Configuration")
+![config_manual_step](assets/config_manual.png "Configuration")
 
 
 
