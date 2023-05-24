@@ -48,9 +48,15 @@ After selecting one of the available servers or if the integration discovers onl
 
 ![config_manual_step](assets/config_manual.png "Configuration")
 
+Configuration is done at these step, a media player is created for each of the server sessions and three default library sensors are also craeted for your *Movies*, *Series* and *Songs*.
+
+## Options
+
+If you are not happy with the default settings, you can fine tune the configuration by going in Hoe Assistant to *Settings*, *Device & Services*, select the *Media Browser* integration and click on the *Configure* button. A menu is diaplayed where you can choose your further action.
+
+![select_options_step](assets/select_options.png "Options")
 
 
-_Troubleshoting: in order to detect your Emby or Jellyfin servers, please configure your server firewall to allow UDP incoming packets on port 7359_
 
 ## Services
 ### Service mediabrowser.send_message
