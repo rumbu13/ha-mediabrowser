@@ -60,11 +60,11 @@ Selecting authentication option will allow you to change the *API key* or the *u
 
 ![auth_step](assets/auth.png "Authentication")
 
-Selecting Media Player option will alow you to control how the integration creates media players for server sessions. By default, all sessions will result ina different media player. If you are not interested in some sessions, you can avoid creating media player entities for them. Check the corresponding category and no more media players will be created.
+Selecting Media Player option will alow you to control how the integration creates media players for server sessions. By default, all sessions will result in a different media player. If you are not interested in some sessions, you can avoid creating media player entities for them. Check the corresponding category and no more media players will be created.
 
 By default, media players which don't have a corresponding session on your server will stay in the entity registry as *unavailable*. This can happen when you manually delete on your server a device or when you choose to ignore some kind of players and they are not reported anymore to Home Assistant. In order to auto delete them, check the *purge* option, otherwise you can go to your *Entity Registry* in Home Assistant and delete them.
 
-Library sensors provide already in the attributes information about the latest media added on your server, but also can provide the same information in a special forat indetnde to be displayed in the well-known [Upcoming Media Card][upcoming-media-card].
+Library sensors provide already in the attributes information about the latest media added on your server, but also can provide the same information in a special format intended to be displayed in the well-known [Upcoming Media Card][upcoming-media-card].
 
 ![auth_step](assets/media_players.png "Media Players")
 
