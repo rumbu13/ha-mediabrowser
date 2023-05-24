@@ -40,18 +40,15 @@ This integration support both media server types. The following components are i
 
 ## Configuration
 
-Configuration is done using user interface. The integration will try to detect automatically your server settings.
-If more than one server is found, a selection dialog will be displayed.
+Configuration is done using user interface. The integration will try to detect automatically your server settings. In order to detect your Emby or Jellyfin servers, please configure your server firewall to allow UDP incoming packets on port 7359. If more than one server is found, a selection dialog will be displayed.
 
 ![select server_step](assets/select_server.png "Select server")
 
-|Field|Example|Explanation|
-|--|--|--|
-|`Host`|192.168.1.1|Host name or IP address of your server|
-|`Port`|8096|Connection port, usually 8096 or 8192 if using SSL
-|`Use_SSL`|-|Check if your server uses a SSL connection
-|`API_Key`|fe6e72be02e04f2586cad47aca9077f9|API Key used to connect
-|`Name`|My Flix|Optional name of you server. This will be used when creating entities or browsing media
+After selecting one of the available servers or if the integration discovers only one instance running in your network, the configuration dialog is diaplayed. Please note that `Name` or `API Key` can be changed later. In order to change the `host` or `port`, the configuration must be deleted and created again.
+
+![config_manual_step](assets/config manual.png "Configuration")
+
+
 
 _Troubleshoting: in order to detect your Emby or Jellyfin servers, please configure your server firewall to allow UDP incoming packets on port 7359_
 
