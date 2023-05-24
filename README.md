@@ -53,6 +53,17 @@ If more than one server is found, a selection dialog will be displayed.
 
 _Troubleshoting: in order to detect your Emby or Jellyfin servers, please configure your server firewall to allow UDP incoming packets on port 7359_
 
+## Services
+### Service mediabrowser.send_message
+Send a message to a session. 
+
+|Service data attribute|Optional|Description|
+|-|-|-|
+|`target`|no|Any `device`, `entity` or `area` that is part of the mediabrowser integration|
+|`text`|no|The message content
+|`title`|no|The message title
+|`timeout`|yes|The message timeout. If omitted the user will have to confirm viewing the message|
+
 ## Contributions are welcome!
 
 If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)
@@ -74,6 +85,7 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 [releases-shield]: https://img.shields.io/github/release/rumbu13/ha-mediabrowser.svg?style=for-the-badge
 [releases]: https://github.com/rumbu13/ha-mediabrowser/releases
 
+[services]: #services
 [mediasource]: https://www.home-assistant.io/integrations/#media-source
 [mediaplayer]: https://www.home-assistant.io/integrations/#media-player
 [sensor]: https://www.home-assistant.io/integrations/#sensor
