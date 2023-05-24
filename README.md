@@ -61,20 +61,40 @@ Send a message to a session.
 |-|-|-|
 |`target`|no|Any `device_id`, `entity_id` or `area_id` that is supported of the mediabrowser integration|
 |`text`|no|The message content
-|`title`|no|The message title
+|`header`|no|The message title
 |`timeout`|yes|The message timeout. If omitted the user will have to confirm viewing the message|
 
 Example:
 
 ```yaml
 service: mediabrowser.send_message
+target:
+  entity_id: media_player.myflix_childroom
 data:
   text: It is too late, please turn off your TV and go to sleep
   header: Parental Control
   timeout: 15
+```
+
+### Service mediabrowser.send_command
+Send a command to a session. 
+
+|Service data attribute|Optional|Description|
+|-|-|-|
+|`target`|no|Any `device_id`, `entity_id` or `area_id` that is supported of the mediabrowser integration|
+|`command`|no|The command to be sent
+|`arguments`|yes|Depending of the command, one or more arguments can be passed
+
+Example:
+
+```yaml
+service: mediabrowser.send_command
 target:
   entity_id: media_player.myflix_childroom
+data:
+  command: ChannelUp
 ```
+For available commands and their arguments, please consult the relevant section on [Emby][emby-command] or [Jellyfin][jellyfin-command] API documentation
 
 ## Contributions are welcome!
 
@@ -103,3 +123,6 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 [sensor]: https://www.home-assistant.io/integrations/#sensor
 [button]: https://www.home-assistant.io/integrations/#button
 [play_media]: https://www.home-assistant.io/integrations/media_player/#service-media_playerplay_media
+
+[emby-command]: http://swagger.emby.media/?staticview=true#/SessionsService/postSessionsByIdCommand
+[jellyfin-command]: https://api.jellyfin.org/#tag/Session/operation/SendGeneralCommand
