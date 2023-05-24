@@ -19,8 +19,8 @@ This integration support both media server types. The following components are i
 - [Media Source][mediasource] for browsing your server(s) libraries
 - [Media Player][mediaplayer], one for each connected session
 - [Session Sensor][sensor] for active sessions
-- [Library Sensor][sensor], one for each library
-- [Latest Media Sensor][sensor] one for each media type
+- [Library Sensor][sensor], custom sensors for libraries, item types and users
+- [Services][services] for sending commands or messages to active sessions
 - [Server Button][button] for rescanning, rebooting or stopping your server
 - [Play Media Service][play_media] allowing you to play anything from your libraries based on various search criteria
 
