@@ -42,7 +42,7 @@ This integration support both media server types. The following components are i
 
 Configuration is done using user interface. The integration will try to detect automatically your server settings. In order to detect your Emby or Jellyfin servers, please configure your server firewall to allow UDP incoming packets on port 7359. If more than one server is found, a selection dialog will be displayed.
 
-![select server_step](assets/select_server.png "Select server" | width=256)
+![select server_step](assets/select_server.png | width=256)
 
 After selecting one of the available servers or if the integration discovers only one instance running in your network, the configuration dialog is diaplayed. Please note that *Name* or *API Key* can be changed later. In order to change the *Host* or the *Port*, the configuration must be deleted and created again.
 
