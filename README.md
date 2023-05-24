@@ -44,7 +44,7 @@ Configuration is done using user interface. The integration will try to detect a
 
 ![select server_step](assets/select_server.png "Select server")
 
-After selecting one of the available servers or if the integration discovers only one instance running in your network, the configuration dialog is diaplayed. Please note that `Name` or `API Key` can be changed later. In order to change the `host` or `port`, the configuration must be deleted and created again.
+After selecting one of the available servers or if the integration discovers only one instance running in your network, the configuration dialog is diaplayed. Please note that *Name* or *API Key* can be changed later. In order to change the *Host* or the *Port*, the configuration must be deleted and created again.
 
 ![config_manual_step](assets/config_manual.png "Configuration")
 
@@ -56,7 +56,9 @@ If you are not happy with the default settings, you can fine tune the configurat
 
 ![select_options_step](assets/select_options.png "Options")
 
+Selecting authentication option will allow you to change the *API key* or the *user* used in various interactions with your server. By default, the integration will select automatically the first user with administrative privileges and with access to all your libraries. Though not recommended, you can select another user, but please note that the integration needs administrative access to your server for most interactions.
 
+![auth_step](assets/auth.png "Authentication")
 
 ## Services
 ### Service mediabrowser.send_message
