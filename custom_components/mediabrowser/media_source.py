@@ -60,7 +60,7 @@ class MBSource(MediaSource):
         hub = self.hubs[parts[0]]
 
         media_item = (
-            await hub.async_get_items_raw(
+            await hub.async_get_items(
                 {Query.FIELDS: Value.MEDIA_SOURCES, Query.IDS: parts[1]}
             )
         )[Key.ITEMS][0]

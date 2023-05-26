@@ -21,7 +21,6 @@ CONF_PURGE_PLAYERS = "purge_players"
 CONF_TIMEOUT = "timeout"
 CONF_UNIQUE_ID = "unique_id"
 CONF_UPCOMING_MEDIA = "upcoming_media"
-CONF_SCAN_INTERVAL = "scan_interval"
 
 CONF_SERVER_ID = "server_id"
 CONF_SERVER_PING = "server_ping"
@@ -37,11 +36,9 @@ CONF_SENSOR_REMOVE = "sensor_remove"
 CONF_CACHE_SERVER_NAME = "cache_server_name"
 CONF_CACHE_SERVER_ID = "cache_server_id"
 CONF_CACHE_SERVER_PING = "cache_server_ping"
-CONF_CACHE_SERVER_OS = "cache_server_os"
 CONF_CACHE_SERVER_VERSION = "cache_server_version"
-CONF_CACHE_SERVER_ADMIN_ID = "cache_server_admin_id"
-
-CONF_USER = "user"
+CONF_CACHE_SERVER_API_KEY = "cache_api_key"
+CONF_CACHE_SERVER_USER_ID = "cache_user_id"
 
 
 DEFAULT_SERVER_NAME = "Media Browser"
@@ -58,12 +55,10 @@ DEFAULT_UPCOMING_MEDIA = False
 DEFAULT_PORT = 8096
 DEFAULT_SSL_PORT = 8920
 DEFAULT_USE_SSL = False
-DEFAULT_SCAN_INTERVAL = 60
 
 
 DATA_HUB = "hub"
 DATA_POLL_COORDINATOR = "poll_coordinator"
-DATA_PUSH_COORDINATOR = "push_coordinator"
 
 DISCOVERY_TIMEOUT = 1
 DISCOVERY_MESSAGE_EMBY = b"who is EmbyServer?"
@@ -107,10 +102,11 @@ class ApiUrl(StrEnum):
     ALBUM_ARTISTS = "/AlbumArtists"
     ARTISTS = "/Artists"
     AUTH_KEYS = "/Auth/Keys"
+    AUTHENTICATE = "/Users/AuthenticateByName"
     CHANNELS = "/Channels"
     COMMAND = "/Command"
     GENRES = "/Genres"
-    INFO = "/System/Info"
+    INFO = "/System/Info/Public"
     ITEMS = "/Items"
     LIBRARIES = "/Library/MediaFolders"
     LIBRARY_REFRESH = "/Library/Refresh"

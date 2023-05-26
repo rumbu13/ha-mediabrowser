@@ -11,7 +11,7 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/rumbu13/ha-mediabrowser/issues",
   "loggers": [
-    "custom_components.media_browser"
+    "custom_components.mediabrowser"
   ],
   "requirements": [],
   "ssdp": [],

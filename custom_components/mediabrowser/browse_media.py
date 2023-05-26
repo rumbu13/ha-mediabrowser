@@ -1,6 +1,5 @@
 """ Browse implementation for Media Browser (Emby/Jellyfin) integration."""
 
-
 import logging
 from typing import Any
 

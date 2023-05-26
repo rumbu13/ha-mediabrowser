@@ -3,7 +3,7 @@
 import json
 import logging
 from datetime import datetime
-from typing import Any
+from typing import Any, Callable
 
 import homeassistant.helpers.entity_registry as entreg
 import homeassistant.util.dt as utildt
@@ -16,23 +16,25 @@ from homeassistant.components.media_player import (
 )
 from homeassistant.components.media_player.browse_media import BrowseMedia
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.core import HomeAssistant
+from .hub import MediaBrowserHub
 
 from .browse_media import async_browse_media_id
 from .const import (
     CONF_PURGE_PLAYERS,
-    DATA_PUSH_COORDINATOR,
+    DATA_HUB,
     DOMAIN,
     MEDIA_TYPE_MAP,
     TICKS_PER_SECOND,
+    EntityType,
     ImageType,
     Key,
 )
-from .coordinator import MediaBrowserPushCoordinator, get_session_key
-from .entity import MediaBrowserPushEntity
+
+from .entity import MediaBrowserEntity
 from .errors import NotFoundError
-from .helpers import extract_player_key, get_image_url, is_float, is_int
+from .helpers import extract_player_key, get_image_url, is_float, is_int, get_player_key
 
 VOLUME_RATIO = 100
 _LOGGER = logging.getLogger(__package__)
@@ -58,6 +60,8 @@ REPEAT_HA_TO_MB = {
 
 REPEAT_MB_TO_HA = {v: k for k, v in REPEAT_HA_TO_MB.items()}
 
+players: set[str] = set()
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -66,72 +70,73 @@ async def async_setup_entry(
 ) -> None:
     """Sets up media players from a config entry."""
 
-    coordinator: MediaBrowserPushCoordinator = hass.data[DOMAIN][entry.entry_id][
-        DATA_PUSH_COORDINATOR
-    ]
+    hub: MediaBrowserHub = hass.data[DOMAIN][entry.entry_id][DATA_HUB]
 
-    @callback
-    def coordinator_update() -> None:
-        new_sessions: set[str] = {
-            get_session_key(session)
-            for session in coordinator.data.sessions.values()
-            if get_session_key(session) not in coordinator.players
-        }
-
+    async def sessions_update(sessions: list[dict[str, Any]]) -> None:
+        new_sessions = (
+            session for session in sessions if get_player_key(session) not in players
+        )
         if entry.options.get(CONF_PURGE_PLAYERS):
             entity_registry = entreg.async_get(hass)
-            players = [
+            obsolete_players = [
                 player
                 for player in entreg.async_entries_for_config_entry(
                     entity_registry, entry.entry_id
                 )
-                if player.unique_id.endswith("-player")
-                and extract_player_key(player.unique_id) not in coordinator.players
+                if player.unique_id.endswith(f"-{EntityType.PLAYER}")
+                and extract_player_key(player.unique_id) not in players
             ]
-            for player in players:
+            for player in obsolete_players:
                 _LOGGER.debug("Purging %s", player.entity_id)
                 entity_registry.async_remove(player.entity_id)
 
-        new_entities = [
-            MediaBrowserPlayer(coordinator.data.sessions[session_key], coordinator)
-            for session_key in new_sessions
-        ]
-
-        coordinator.players |= new_sessions
+        new_entities = [MediaBrowserPlayer(hub, session) for session in new_sessions]
         async_add_entities(new_entities)
 
-    coordinator_update()
-    entry.async_on_unload(coordinator.async_add_listener(coordinator_update))
+    await sessions_update(await hub.async_get_sessions())
+    entry.async_on_unload(hub.add_sessions_listener(sessions_update))
 
 
-class MediaBrowserPlayer(MediaBrowserPushEntity, MediaPlayerEntity):
+class MediaBrowserPlayer(MediaBrowserEntity, MediaPlayerEntity):
     """Represents a media player entity."""
 
-    def __init__(
-        self,
-        session: dict[str, Any],
-        coordinator: MediaBrowserPushCoordinator,
-        context: Any = None,
-    ) -> None:
-        super().__init__(coordinator, context)
-        self._coordinator = coordinator
-        self._session_key: str = get_session_key(session)
+    def __init__(self, hub: MediaBrowserHub, session: dict[str, Any]) -> None:
+        super().__init__(hub)
+        self._session_key: str = get_player_key(session)
         self._session: dict[str, Any] | None = session
         self._last_update: datetime | None = None
+        self._unlistener: Callable[[], None] | None = None
+
         self._attr_name = f"{self.hub.name} {self._session[Key.DEVICE_NAME]}"
-        self._attr_unique_id = f"{self.hub.server_id}-{self._session_key}-player"
+        self._attr_unique_id = (
+            f"{self.hub.server_id}-{self._session_key}-{EntityType.PLAYER}"
+        )
         self._attr_media_image_remotely_accessible = False
+        players.add(self._session_key)
         self._update_from_data()
 
-    def _handle_coordinator_update(self) -> None:
-        session = self._coordinator.data.sessions.get(self._session_key)
-        if self._session is None or session is None or session != self._session:
-            self._last_update = utildt.utcnow()
-            self._session = session
-            self._update_from_data()
-            super()._handle_coordinator_update()
+    async def async_added_to_hass(self):
+        self._unlistener = self.hub.add_sessions_listener(self._async_sessions_update)
+
+    async def async_will_remove_from_hass(self):
+        if self._unlistener is not None:
+            self._unlistener()
+
+    async def _async_sessions_update(self, sessions: list[dict:str, Any]) -> None:
+        session = next(
+            (
+                session
+                for session in sessions
+                if get_player_key(session) == self._session_key
+            ),
+            None,
+        )
+        self._last_update = utildt.utcnow()
+        self._session = session
+        self._update_from_data()
         if session is None:
-            self._coordinator.players.remove(self._session_key)
+            players.remove(self._session_key)
+        self.async_write_ha_state()
 
     def _update_init(self) -> None:
         self._attr_extra_state_attributes = {}
@@ -333,7 +338,7 @@ class MediaBrowserPlayer(MediaBrowserPushEntity, MediaPlayerEntity):
         params = json.loads(media_id)
         params["Limit"] = 1
         try:
-            items = (await self.hub.async_get_items_raw(params))[Key.ITEMS][0]
+            items = (await self.hub.async_get_items(params))[Key.ITEMS][0]
         except (KeyError, IndexError) as err:
             raise NotFoundError(
                 "Cannot find any item with the specified parameters"
@@ -342,8 +347,4 @@ class MediaBrowserPlayer(MediaBrowserPushEntity, MediaPlayerEntity):
 
     @property
     def available(self) -> bool:
-        return (
-            self._session is not None
-            and get_session_key(self._session) in self._coordinator.data.sessions
-            and self.coordinator.last_update_success
-        )
+        return self._session is not None

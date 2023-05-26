@@ -4,7 +4,6 @@ import logging
 from typing import Any, Tuple
 
 from .const import (
-    DEVICE_PROFILE,
     VIRTUAL_FILTER_MAP,
     VIRTUAL_FOLDER_MAP,
     ItemType,
@@ -82,7 +81,7 @@ async def _get_collection(
 async def _get_movies(
     hub: MediaBrowserHub, library: dict[str, Any]
 ) -> list[dict[str, Any]]:
-    children = await hub.async_get_items_raw(
+    children = await hub.async_get_items(
         {
             Query.INCLUDE_ITEM_TYPES: ItemType.MOVIE,
             Query.RECURSIVE: Value.TRUE,
@@ -105,7 +104,7 @@ async def _get_movies(
 async def _get_tvshows(
     hub: MediaBrowserHub, library: dict[str, Any]
 ) -> list[dict[str, Any]]:
-    children = await hub.async_get_items_raw(
+    children = await hub.async_get_items(
         {
             Query.INCLUDE_ITEM_TYPES: ItemType.SERIES,
             Query.RECURSIVE: Value.TRUE,
@@ -129,7 +128,7 @@ async def _get_music(
     hub: MediaBrowserHub, library: dict[str, Any]
 ) -> list[dict[str, Any]]:
     # emby/jellyfin bug: needs User/Items, Items ignores ParentId
-    albums = await hub.async_get_user_items_raw(
+    albums = await hub.async_get_user_items(
         hub.server_admin_id,
         {
             Query.INCLUDE_ITEM_TYPES: ItemType.MUSIC_ALBUM,
@@ -140,7 +139,7 @@ async def _get_music(
         },
     )
 
-    videos = await hub.async_get_items_raw(
+    videos = await hub.async_get_items(
         {
             Query.INCLUDE_ITEM_TYPES: ItemType.MUSIC_VIDEO,
             Query.RECURSIVE: Value.TRUE,
@@ -169,7 +168,7 @@ async def _get_music(
 async def _get_musicvideos(
     hub: MediaBrowserHub, library: dict[str, Any]
 ) -> list[dict[str, Any]]:
-    children = await hub.async_get_items_raw(
+    children = await hub.async_get_items(
         {
             Query.INCLUDE_ITEM_TYPES: ItemType.MUSIC_VIDEO,
             Query.RECURSIVE: Value.TRUE,
@@ -193,7 +192,7 @@ async def _get_audio_books(
     hub: MediaBrowserHub, library: dict[str, Any]
 ) -> list[dict[str, Any]]:
     # emby/jellyfin bug: needs User/Items, Items ignores ParentId
-    children = await hub.async_get_user_items_raw(
+    children = await hub.async_get_user_items(
         hub.server_admin_id,
         {
             Query.INCLUDE_ITEM_TYPES: ItemType.MUSIC_ALBUM,
@@ -232,7 +231,7 @@ async def _get_homevideos(
 async def _get_default_children(
     hub: MediaBrowserHub, parent_id: str
 ) -> list[dict[str, Any]]:
-    children = await hub.async_get_items_raw(
+    children = await hub.async_get_items(
         {
             Query.RECURSIVE: Value.FALSE,
             Query.PARENT_ID: parent_id,
@@ -246,7 +245,7 @@ async def _get_default_children(
 async def _get_playlist_children(
     hub: MediaBrowserHub, parent_id: str
 ) -> list[dict[str, Any]]:
-    children = await hub.async_get_items_raw(
+    children = await hub.async_get_items(
         {
             Query.RECURSIVE: Value.FALSE,
             Query.PARENT_ID: parent_id,
@@ -293,7 +292,7 @@ async def _get_virtual_folder(
 
 
 async def _get_playlists(hub: MediaBrowserHub, parent_id: str) -> list[dict[str, Any]]:
-    children = await hub.async_get_items_raw(
+    children = await hub.async_get_items(
         {
             Query.RECURSIVE: Value.TRUE,
             Query.PARENT_ID: parent_id,
@@ -306,7 +305,7 @@ async def _get_playlists(hub: MediaBrowserHub, parent_id: str) -> list[dict[str,
 
 
 async def _get_videos(hub: MediaBrowserHub, parent_id: str) -> list[dict[str, Any]]:
-    children = await hub.async_get_items_raw(
+    children = await hub.async_get_items(
         {
             Query.RECURSIVE: Value.TRUE,
             Query.PARENT_ID: parent_id,
@@ -319,7 +318,7 @@ async def _get_videos(hub: MediaBrowserHub, parent_id: str) -> list[dict[str, An
 
 
 async def _get_photos(hub: MediaBrowserHub, parent_id: str) -> list[dict[str, Any]]:
-    children = await hub.async_get_items_raw(
+    children = await hub.async_get_items(
         {
             Query.RECURSIVE: Value.TRUE,
             Query.PARENT_ID: parent_id,
@@ -332,7 +331,7 @@ async def _get_photos(hub: MediaBrowserHub, parent_id: str) -> list[dict[str, An
 
 
 async def _get_tags(hub: MediaBrowserHub, parent_id: str) -> list[dict[str, Any]]:
-    children = await hub.async_get_items_raw(
+    children = await hub.async_get_items(
         {
             Query.RECURSIVE: Value.TRUE,
             Query.PARENT_ID: parent_id,
@@ -503,7 +502,7 @@ async def get_item(hub: MediaBrowserHub, item_id: str) -> dict[str, Any]:
     parts = item_id.split("/")
     if len(parts) == 1:
         try:
-            return (await hub.async_get_items_raw({"Ids": item_id}))[Key.ITEMS][0]
+            return (await hub.async_get_items({"Ids": item_id}))[Key.ITEMS][0]
         except (KeyError, IndexError) as idx:
             raise BrowseMediaError(f"Cannot find item {item_id}") from idx
 
@@ -522,9 +521,7 @@ async def get_item(hub: MediaBrowserHub, item_id: str) -> dict[str, Any]:
                 )
             case _:
                 try:
-                    item = (await hub.async_get_items_raw({"Ids": parts[2]}))[
-                        Key.ITEMS
-                    ][0]
+                    item = (await hub.async_get_items({"Ids": parts[2]}))[Key.ITEMS][0]
                 except (KeyError, IndexError) as idx:
                     raise BrowseMediaError(f"Cannot find item {item_id}") from idx
         return _make_virtual_subfolder(parts[0], item, parts[1])
@@ -551,7 +548,7 @@ async def _get_virtual_children(
             case _:
                 raise BrowseMediaError(f"Unknown virtual folder type: {parts[0]}")
 
-    library = (await hub.async_get_items_raw({"Ids": parts[1]}))[Key.ITEMS][0]
+    library = (await hub.async_get_items({"Ids": parts[1]}))[Key.ITEMS][0]
     match library[Key.COLLECTION_TYPE]:
         case "movies":
             query[Query.INCLUDE_ITEM_TYPES] = "Movie"
@@ -568,7 +565,7 @@ async def _get_virtual_children(
                 f"Unsupported virtual collection type: {library.collection_type}"
             )
 
-    return (await hub.async_get_items_raw(query))[Key.ITEMS]
+    return (await hub.async_get_items(query))[Key.ITEMS]
 
 
 async def get_stream_url(
@@ -578,7 +575,7 @@ async def get_stream_url(
     url: str | None = None
     mime_type: str | None = None
 
-    info = await hub.async_playback_info(item_id)
+    info = await hub.async_get_playback_info(item_id)
 
     if Key.MEDIA_SOURCES in info:
         direct_stream: bool = False

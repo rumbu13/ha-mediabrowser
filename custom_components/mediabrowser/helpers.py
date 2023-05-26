@@ -103,6 +103,11 @@ def extract_player_key(unique_id: str) -> str:
     return "-".join(parts[1:-1])
 
 
+def get_player_key(session: dict[str, Any]) -> str:
+    """Gets a unique session key"""
+    return f"{session[Key.DEVICE_ID]}-{session[Key.CLIENT]}"
+
+
 def is_float(val: Any, log_level: int = logging.NOTSET) -> bool:
     """Checks if val can be converted to int"""
     try:
@@ -138,3 +143,16 @@ def is_datetime(val: Any, log_level: int = logging.NOTSET) -> bool:
             _LOGGER.log(log_level, "Invalid date value: %s", val)
         return False
     return True
+
+
+def autolog(message):
+    "Automatically log the current function details."
+    import inspect
+
+    # Get the previous frame in the stack, otherwise it would
+    # be this function!!!
+    func = inspect.currentframe().f_back.f_code
+    # Dump the message + the name of this function to the log.
+    _LOGGER.debug(
+        "%s: %s in %s:%i", message, func.co_name, func.co_filename, func.co_firstlineno
+    )

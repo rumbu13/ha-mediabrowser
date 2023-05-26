@@ -2,7 +2,7 @@
 
 import logging
 from datetime import date
-from typing import Any
+from typing import Any, Callable
 
 from dateutil import parser
 from homeassistant.components.sensor import SensorEntity
@@ -10,17 +10,19 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .hub import MediaBrowserHub
+
 from .const import (
     CONF_SENSOR_ITEM_TYPE,
     CONF_SENSOR_LIBRARY,
     CONF_SENSOR_USER,
     CONF_SENSORS,
     CONF_UPCOMING_MEDIA,
-    DATA_POLL_COORDINATOR,
-    DATA_PUSH_COORDINATOR,
+    DATA_HUB,
     DEFAULT_UPCOMING_MEDIA,
     DOMAIN,
     ENTITY_TITLE_MAP,
+    LATEST_QUERY_PARAMS,
     SENSOR_ITEM_TYPES,
     TICKS_PER_MINUTE,
     TICKS_PER_SECOND,
@@ -29,9 +31,9 @@ from .const import (
     ImageType,
     ItemType,
     Key,
+    Query,
 )
-from .coordinator import MediaBrowserPollCoordinator, MediaBrowserPushCoordinator
-from .entity import MediaBrowserPollEntity, MediaBrowserPushEntity
+from .entity import MediaBrowserEntity
 from .helpers import (
     build_sensor_key,
     get_category_image_url,
@@ -53,15 +55,13 @@ async def async_setup_entry(
 ) -> None:
     """Set up sensors based on a config entry."""
     data = hass.data[DOMAIN][entry.entry_id]
-    poll_coordinator: MediaBrowserPollCoordinator = data[DATA_POLL_COORDINATOR]
-    push_coordinator: MediaBrowserPushCoordinator = data[DATA_PUSH_COORDINATOR]
-    await push_coordinator.async_refresh()
+    hub: MediaBrowserHub = data[DATA_HUB]
 
     async_add_entities(
-        [SessionsSensor(push_coordinator)]
+        [SessionsSensor(hub)]
         + [
             LibrarySensor(
-                poll_coordinator,
+                hub,
                 sensor[CONF_SENSOR_USER],
                 sensor[CONF_SENSOR_ITEM_TYPE],
                 sensor[CONF_SENSOR_LIBRARY],
@@ -72,129 +72,100 @@ async def async_setup_entry(
     )
 
 
-def _build_library_sensors(
-    coordinator: MediaBrowserPollCoordinator, entry: ConfigEntry
-) -> list[Any]:
-    sensors = entry.options.get(CONF_SENSORS, [])
-    result = []
-    for sensor in sensors:
-        user_id = sensor[CONF_SENSOR_USER]
-        item_type = sensor[CONF_SENSOR_ITEM_TYPE]
-        library_id = sensor[CONF_SENSOR_LIBRARY]
-        if user_id not in coordinator.library_sensors:
-            coordinator.library_sensors[user_id] = {}
-        if item_type not in coordinator.library_sensors[user_id]:
-            coordinator.library_sensors[user_id][item_type] = set()
-        coordinator.library_sensors[user_id][item_type].add(library_id)
-        result.append(
-            LibrarySensor(
-                coordinator,
-                sensor[CONF_SENSOR_USER],
-                sensor[CONF_SENSOR_ITEM_TYPE],
-                sensor[CONF_SENSOR_LIBRARY],
-                entry.options.get(CONF_UPCOMING_MEDIA, DEFAULT_UPCOMING_MEDIA),
-            )
-        )
-    return result
+class SessionsSensor(MediaBrowserEntity, SensorEntity):
+    """Sensor counting active sessions."""
 
-
-class SessionsSensor(MediaBrowserPushEntity, SensorEntity):
-    """Defines a sensor entity."""
-
-    def __init__(
-        self, coordinator: MediaBrowserPushCoordinator, context: Any = None
-    ) -> None:
-        super().__init__(coordinator, context)
+    def __init__(self, hub: MediaBrowserHub) -> None:
+        super().__init__(hub)
         self._attr_icon = ICON_SENSOR_SESSIONS
         self._attr_name = f"{self.hub.name} {ENTITY_TITLE_MAP[EntityType.SESSIONS]}"
         self._attr_unique_id = f"{self.hub.server_id}-{EntityType.SESSIONS}"
-        self._attr_native_unit_of_measurement = "Watching"
-        self._latest_info: dict[str, dict[str, Any]] | None = coordinator.data.sessions
-        self._update_from_data()
+        self._attr_native_unit_of_measurement = "Sessions"
+        self._attr_should_poll = False
+        self._attr_available = False
+        self._unlistener: Callable[[], None] = None
 
-    def _handle_coordinator_update(self) -> None:
-        self._latest_info = self.coordinator.data.sessions
-        self._update_from_data()
-        return super()._handle_coordinator_update()
+    async def async_added_to_hass(self):
+        self._unlistener = self.hub.add_sessions_listener(self._async_sessions_updated)
+        sessions = await self.hub.async_get_sessions()
+        await self._async_sessions_updated(sessions)
 
-    def _update_from_data(self) -> None:
+    async def async_will_remove_from_hass(self):
+        if self._unlistener is not None:
+            self._unlistener()
+
+    async def _async_sessions_updated(self, sessions: dict[str, Any]) -> None:
+        self._attr_available = True
         self._attr_native_value = None
         self._attr_extra_state_attributes = {}
 
-        if self._latest_info is not None:
-            self._attr_native_value = len(
-                [
-                    session
-                    for session in self._latest_info.values()
-                    if Key.NOW_PLAYING_ITEM in session
-                ]
+        self._attr_native_value = len(
+            [session for session in sessions if Key.NOW_PLAYING_ITEM in session]
+        )
+
+        attrs = [
+            _get_session_attr(session)
+            for session in sorted(
+                sessions,
+                key=lambda x: str(x.get(Key.LAST_ACTIVITY_DATE)),
+                reverse=True,
             )
+        ]
 
-            attrs = [
-                _get_session_attr(session)
-                for session in sorted(
-                    self._latest_info.values(),
-                    key=lambda x: str(x.get(Key.LAST_ACTIVITY_DATE)),
-                    reverse=True,
-                )
-            ]
+        self._attr_extra_state_attributes = {
+            "server_name": self.hub.server_name,
+            "server_id": self.hub.server_id,
+            "total_sessions": len(sessions),
+            "sessions": attrs,
+        }
 
-            self._attr_extra_state_attributes = {
-                "server_name": self.hub.server_name,
-                "server_id": self.hub.server_id,
-                "total_sessions": len(self._latest_info),
-                "sessions": attrs,
-            }
-
-    @property
-    def available(self) -> bool:
-        return self._latest_info is not None and self.coordinator.last_update_success
+        self.async_write_ha_state()
 
 
-class LibrarySensor(MediaBrowserPollEntity, SensorEntity):
+class LibrarySensor(MediaBrowserEntity, SensorEntity):
     """Custom sensor for displaying latest items"""
 
     def __init__(
         self,
-        coordinator: MediaBrowserPollCoordinator,
+        hub: MediaBrowserHub,
         user_id: str,
         item_type: ItemType,
         library_id: str,
         show_upcoming_data: bool,
     ) -> None:
-        super().__init__(coordinator)
+        super().__init__(hub)
         self._item_type: ItemType = item_type
         self._user_id: str = user_id
         self._library_id: str = library_id
         self._show_upcoming_data = show_upcoming_data
-        name = f'{self.hub.name} {SENSOR_ITEM_TYPES[item_type]["title"]}'
-        if library_id != Key.ALL and library_id in coordinator.data.libraries:
-            name = name + " - " + coordinator.data.libraries[library_id][Key.NAME]
-        if user_id != Key.ALL and user_id in coordinator.data.users:
-            name = name + f" ({coordinator.data.users[user_id][Key.NAME]})"
-        self._attr_name = name
+        self._attr_name = f'{self.hub.name} {SENSOR_ITEM_TYPES[item_type]["title"]}'
         self._attr_unique_id = f"{self.hub.server_id}-{build_sensor_key(user_id, item_type, library_id)}-{EntityType.LIBRARY}"
         self._latest_info: dict[str, Any] | None = None
         self._attr_icon = SENSOR_ITEM_TYPES[item_type]["icon"]
-        self._update_from_coordinator()
-        self._update_from_data()
+        self._unlistener: Callable[[], None] | None = None
 
-    def _update_from_coordinator(self):
+    async def async_added_to_hass(self):
+        self._unlistener = self.hub.add_library_listener(self._async_update)
+        await self._async_update({})
+
+    async def async_will_remove_from_hass(self):
+        if self._unlistener is not None:
+            self._unlistener()
+
+    async def _async_update(self, data: dict[str, Any]) -> None:
+        if self._library_id != Key.ALL:
+            if collection_folders := data.get("CollectionFolders"):
+                if not self._library_id in collection_folders:
+                    return
+        params = LATEST_QUERY_PARAMS | {Query.INCLUDE_ITEM_TYPES: self._item_type}
+        if self._library_id != Key.ALL:
+            params |= {Key.PARENT_ID: self._library_id}
         self._latest_info = (
-            self.coordinator.data.library_infos[self._user_id][self._item_type][
-                self._library_id
-            ]
-            if self._user_id in self.coordinator.data.library_infos
-            and self._item_type in self.coordinator.data.library_infos[self._user_id]
-            and self._library_id
-            in self.coordinator.data.library_infos[self._user_id][self._item_type]
-            else None
+            await self.hub.async_get_user_items(self._user_id, params)
+            if self._user_id != Key.ALL
+            else await self.hub.async_get_items(params)
         )
-
-    def _handle_coordinator_update(self) -> None:
-        self._update_from_coordinator()
         self._update_from_data()
-        return super()._handle_coordinator_update()
 
     def _update_from_data(self) -> None:
         self._attr_native_value = None

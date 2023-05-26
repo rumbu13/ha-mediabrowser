@@ -14,27 +14,27 @@
             "manual": {
                 "title": "Configuration",
                 "data": {
-                    "host": "Host",
-                    "port": "Port",
-                    "ssl": "Use SSL",
+                    "url": "URL",
                     "name": "Name",
-                    "api_key": "API Key"
+                    "username": "Username",
+                    "password": "Password"
                 },
                 "data_description": {
-                    "host": "IP Address or Host name where the Emby/Jellyfin server runs",
-                    "port": "Connection port",
+                    "url": "URL where your Emby or Jellyfin can be found",
                     "name": "Use this instead of server name when creating entities",
-                    "api_key": "Go to you Emby/Jellyfin server dashboard, select API Keys under the Advanced menu and generate a new one if necessary"
+                    "username": "Your user name, needs administrative privileges",
+                    "password": "Your password"
                 }
             }
         },
         "error": {
             "bad_request": "Are you sure that this is an Emby or Jellyfin server?",
-            "cannot_connect": "Cannot connect",
-            "invalid_auth": "Invalid authentication",
+            "cannot_connect": "Server unavailable",
+            "invalid_auth": "Invalid username or password",
             "unknown": "Unknown error",
-            "weak_auth": "The provided API Key dows not have enough rights",
-            "timeout": "Timeout while trying to connect to server"
+            "weak_auth": "The specified user does not have enough rights",
+            "timeout": "Timeout while trying to connect to server",
+            "mismatch": "You are trying to connect to another server. Create new configuration for another server"
         },
         "abort": {
             "already_configured": "Device is already configured"
@@ -47,6 +47,7 @@
                 "menu_options": {
                     "auth": "Configure authentication",
                     "players": "Media Players options",
+                    "libraries": "Library sensors options",
                     "add_sensor": "Add a sensor",
                     "remove_sensor": "Remove a sensor",
                     "advanced": "Advanced options"
@@ -55,12 +56,21 @@
             "auth": {
                 "title": "Authentication",
                 "data": {
-                    "api_key": "API Key",
-                    "user": "Impersonate user"
+                    "username": "Username",
+                    "password": "Password"
                 },
                 "data_description": {
-                    "api_key": "Go to you Emby/Jellyfin server dashboard, select API Keys under the Advanced menu and generate a new one if necessary",
-                    "user": "Impersonate this user when serving media items"
+                    "username": "Your username (needs administrative privileges)",
+                    "password": "Your password"
+                }
+            },
+            "libraries": {
+                "title": "Library sensors options",
+                "data": {
+                    "upcoming_media": "Provide data for upcoming media card"
+                },
+                "data_description": {
+                    "upcoming_media": "Add specific attributes to library sensors in order to be used by Upcoming Media Card"
                 }
             },
             "players": {
@@ -70,11 +80,14 @@
                     "ignore_dlna_players": "Ignore DLNA players",
                     "ignore_mobile_players": "Ignore mobile players",
                     "ignore_app_players": "Ignore application players",
-                    "purge_players": "Auto purge media players",
-                    "upcoming_media": "Provide data for upcoming media card"
+                    "purge_players": "Auto purge media players"
                 },
                 "data_description": {
-                    "ignore_web_players": "This is never shown"
+                    "ignore_web_players": "Do not create media players for web sessions",
+                    "ignore_dlna_players": "Do not create media players for DLNA sessions",
+                    "ignore_mobile_players": "Do not create media players for mobile sessions",
+                    "ignore_app_players": "Do not create media players for known integrations",
+                    "purge_players": "Automatically remove unavailable media players"
                 }
             },
             "add_sensor": {
@@ -107,8 +120,7 @@
                     "device_name": "Device name",
                     "device_id": "Device identifier",
                     "device_version": "Device version",
-                    "timeout": "Timeout",
-                    "scan_interval": "Scan interval"
+                    "timeout": "Timeout"
                 },
                 "data_description": {
                     "name": "Use this instead of server name when creating entities",
@@ -116,17 +128,18 @@
                     "device_name": "Device name to be reported in Emby/Jellyfin server",
                     "device_id": "Device name to be reported in Emby/Jellyfin server",
                     "device_version": "Device version to be reported in Emby/Jellyfin server",
-                    "timeout": "How much time to wait (in seconds) to consider that you Emby/Jellyfin server is down",
-                    "scan_interval": "Refresh sensors time interval (seconds). This is used only for library sensors, sessions sensors and media players are updated in real time"
+                    "timeout": "How much time to wait (in seconds) to consider that you Emby/Jellyfin server is down"
                 }
             }
         },
         "error": {
-            "cannot_connect": "Cannot connect",
-            "invalid_auth": "Invalid authentication",
+            "bad_request": "Are you sure that this is an Emby or Jellyfin server?",
+            "cannot_connect": "Server unavailable",
+            "invalid_auth": "Invalid username or password",
             "unknown": "Unknown error",
-            "weak_auth": "The provided API Key dows not have enough rights",
-            "timeout": "Timeout while trying to connect to server"
+            "weak_auth": "The specified user does not have enough rights",
+            "timeout": "Timeout while trying to connect to server",
+            "mismatch": "You are trying to connect to another server. Create new configuration for another server"
         },
         "abort": {
             "no_sensors": "There are no sensors configured",
