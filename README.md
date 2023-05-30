@@ -72,13 +72,13 @@ Selecting authentication option will allow you to change the *Username* and *pas
 
 Selecting Media Player option will alow you to control how the integration creates media players for server sessions. By default, all sessions will result in a different media player. If you are not interested in some sessions, you can avoid creating media player entities for them. Check the corresponding category and no more media players will be created.
 
-|Setting|Required|Example|Comments|
+|Setting|Comments|
 |-|-|-|-|
-|`Ignore web players`|no|-|The integration will not create media players for web sessions
-|`Ignore DLNA players`|no|-|The integration will not create media players for DLNA sessions
-|`Ignore mobile players`|no|-|The integration will not create media players for mobile sessions
-|`Ignore application players`|no|-|The integration will not create media players for known applications (e.g other integrations)
-|`Auto purge media players`|no|-|By default, media players which don't have a corresponding session on your server will stay in the entity registry as *unavailable*. This can happen when you manually delete on your server a device or when you choose to ignore some kind of players and they are not reported anymore to Home Assistant. In order to auto delete them, check the *purge* option, otherwise you can go to your *Entity Registry* in Home Assistant and delete them manually.|
+|Ignore web players|The integration will not create media players for web sessions
+|Ignore DLNA players|The integration will not create media players for DLNA sessions
+|Ignore mobile players|The integration will not create media players for mobile sessions
+|Ignore application players|The integration will not create media players for known applications (e.g other integrations)
+|Auto purge media players|By default, media players which don't have a corresponding session on your server will stay in the entity registry as *unavailable*. This can happen when you manually delete on your server a device or when you choose to ignore some kind of players and they are not reported anymore to Home Assistant. In order to auto delete them, check the *purge* option, otherwise you can go to your *Entity Registry* in Home Assistant and delete them manually.|
 
 
 
