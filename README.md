@@ -45,14 +45,13 @@ Configuration is done using user interface. The integration will try to detect a
 
 After selecting one of the available servers or if the integration discovers only one instance running in your network, the configuration dialog is displayed. Enter your Emby or Jellyfin *URL address* including the *port number* and the *HTTP protocol* to use.
 
------------------------------------
 |Setting|Required|Example|Comments|
------------------------------------
+|-|-|-|-|
 |`URL`|yes|http://myflix:8096|Enter your Emby pr Jellyfin address. If you omit your port number, the integration will assume a *default port* (8096). Put *https* in formt of your url to *use SSL*|
-|`Username`|yes|Administrator|User name used to make various requests to the server. Please use an *administrative account* in order to let the integration access all libraries.
+|`User`|yes|Administrator|User name used to make various requests to the server. Please use an *administrative account* in order to let the integration access all libraries.
 |`Password`|yes|-|Password used to authenticate
-|`Server name`|no|Myflix|Custom name of your server. This is used especialyy for entity naming. Leave blank to use the *default server name*
------------------------------------
+|`Name`|no|Myflix|Custom name of your server. This is used especialyy for entity naming. Leave blank to use the *default server name*
+
 
 
 Configuration is done at these step, a media player is created for each of the server sessions and three default library sensors are also craeted for your *Movies*, *Series* and *Songs*.
