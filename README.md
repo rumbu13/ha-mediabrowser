@@ -1,14 +1,11 @@
 # Media Browser - Emby/Jellyfin integration
 
 [![GitHub Release][releases-shield]][releases]
-[![GitHub Activity][commits-shield]][commits]
+
 [![License][license-shield]](LICENSE)
 
 [![hacs][hacsbadge]][hacs]
-![Project Maintenance][maintenance-shield]
-[![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
 
-[![Community Forum][forum-shield]][forum]
 
 _Home Assistant integration for [Emby][emby] and [Jellyfin][jellyfin]._
 
@@ -21,7 +18,7 @@ This integration support both media server types and can manage multiple servers
 - [Session Sensor](#sessions-sensor) for active sessions
 - [Library Sensor](#library-sensor), custom sensors for libraries, item types and users
 - [Services][services] for sending commands or messages to active sessions
-- [Server Button][button] for rescanning, rebooting or stopping your server
+- [Server Button](#buttons) for rescanning, rebooting or stopping your server
 - [Play Media Service][play_media] allowing you to play anything from your libraries based on various search criteria
 - [Events][events] for pretty much every message sent by the server
 
