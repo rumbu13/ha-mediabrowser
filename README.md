@@ -194,7 +194,7 @@ data:
 
 ## Events
 
-Various events can be fired by the integration, all of them starting with `mediabrowser_` Depending on the event, several information is passed along with it. Unfortunatelly the only way to know what data is avaialble is to look into schemas published by [Emby][http://swagger.emby.media/?staticview=true#/] or [Jellyfin][https://api.jellyfin.org/] or in their source code. Of course, you can experient yourself in the *Developper Tools* by subscribing to such events:
+Various events can be fired by the integration, all of them starting with `mediabrowser_` Depending on the event, several information is passed along with it. Unfortunatelly the only way to know what data is avaialble is to look into schemas published by Emby or Jellyfin or in their source code. Of course, you can experient yourself in the *Developper Tools* by subscribing to such events:
 
 - `mediabrowser_session_changed` (resource intensive, disabled by default)
 - `mediabrowser_user_data_changed`
