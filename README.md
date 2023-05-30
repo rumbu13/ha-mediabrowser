@@ -11,6 +11,9 @@
 
 _Home Assistant integration for [Emby][emby] and [Jellyfin][jellyfin]._
 
+![alt text](assets/mb_movies.png)
+![alt text](assets/tvshows.png)
+![alt text](assets/mb_actors.png)
 
 ## Summary
 
