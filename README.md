@@ -25,11 +25,6 @@ This integration support both media server types and can manage multiple servers
 - [Play Media Service][play_media] allowing you to play anything from your libraries based on various search criteria
 - [Events][events] for pretty much every message sent by the server
 
-
-
-
-
-
 ## Installation
 
 1. Using the tool of choice open the directory (folder) for your HA configuration (where you find `configuration.yaml`).
@@ -167,6 +162,36 @@ data:
 ```
 For available commands and their arguments, please consult the relevant section on [Emby][emby-command] or [Jellyfin][jellyfin-command] API documentation
 
+### Service mediaplayer.play_media
+Plays the specified item
+
+|Service data attribute|Optional|Description|
+|-|-|-|
+|`target`|no|Any `device_id`, `entity_id` or `area_id` that is supported of the mediabrowser integration|
+|`media_content_id`|no|Media unique identifier as known by your server. You can obtain a media unique identifier by looking at any integration media player in *Developper Tools* and looking for `media_content_id `attribute while it is playing something. Another option is to use a json string (delimited by `{}`) to search for a specific item. Lookup in the [Emby][emby-media-id] or [Jellyfin][jellyfin-media-id] documentation for query parameters. The integration does automatically conversions to `CamelCase` or `snake_case`, you can use the one which suits you better|
+|`media_content_type`|yes|Ignored
+
+Example (unique identifier):
+
+```yaml
+service: mediaplayer.play_media
+target:
+  entity_id: media_player.myflix_childroom
+data:
+  media_content_id: 791245422247247
+  media_content_type: movie
+```
+Example (search):
+
+```yaml
+service: mediaplayer.play_media
+target:
+  entity_id: media_player.myflix_childroom
+data:
+  media_content_id: {"name_starts_with" : "Avatar", "include_item_types" : "Movie"}
+  media_content_type: movie
+```
+
 ## Contributions are welcome!
 
 If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)
@@ -198,3 +223,6 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 [emby-command]: http://swagger.emby.media/?staticview=true#/SessionsService/postSessionsByIdCommand
 [jellyfin-command]: https://api.jellyfin.org/#tag/Session/operation/SendGeneralCommand
 [upcoming-media-card]: https://github.com/custom-cards/upcoming-media-card
+
+[emby-media-id]: http://swagger.emby.media/?staticview=true#/ItemsService/getItems
+[jellyfin-media-id]: https://api.jellyfin.org/#tag/Items/operation/GetItems
