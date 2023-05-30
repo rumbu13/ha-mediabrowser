@@ -12,7 +12,9 @@ from homeassistant.config_entries import (
     ConfigEntryNotReady,
 )
 from homeassistant.const import CONF_URL, Platform
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, Context
+
+from .helpers import snake_cased_json
 
 from .const import (
     CONF_CACHE_SERVER_API_KEY,
@@ -29,7 +31,7 @@ from .const import (
     DATA_POLL_COORDINATOR,
     DOMAIN,
 )
-from .hub import MediaBrowserHub, ServerOptions
+from .hub import MediaBrowserHub
 
 _LOGGER = logging.getLogger(__package__)
 
@@ -39,7 +41,17 @@ PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.MEDIA_PLAYER, Platform.BU
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Media Browser (Emby/Jellyfin) from a config entry."""
 
-    hub = MediaBrowserHub(ServerOptions(entry.options))
+    hub = MediaBrowserHub(dict(entry.options))
+
+    async def async_websocket_message(
+        message_type: str, data: dict[str, None] | None
+    ) -> None:
+        _LOGGER.debug("%s firing event %s_%s", hub.server_name, DOMAIN, message_type)
+        hass.bus.async_fire(
+            f"{DOMAIN}_{message_type}",
+            snake_cased_json(data),
+            context=Context(hub.user_id, parent_id=hub.server_id),
+        )
 
     try:
         await hub.async_start(True)
@@ -52,6 +64,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     except (asyncio.TimeoutError, TimeoutError) as err:
         raise ConfigEntryNotReady from err
 
+    _LOGGER.debug("%s hub has started", hub.server_name)
+
     new_options = {
         CONF_CACHE_SERVER_NAME: hub.server_name,
         CONF_CACHE_SERVER_ID: hub.server_id,
@@ -63,14 +77,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.config_entries.async_update_entry(entry, options=entry.options | new_options)
 
-    _LOGGER.debug(entry.options | new_options)
-
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = dict(entry.data)
     hass.data[DOMAIN][entry.entry_id][DATA_HUB] = hub
 
     entry.async_on_unload(entry.add_update_listener(async_options_update_listener))
-
+    entry.async_on_unload(hub.on_websocket_message(async_websocket_message))
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     return True

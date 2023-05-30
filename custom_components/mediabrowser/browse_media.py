@@ -1,4 +1,5 @@
-""" Browse implementation for Media Browser (Emby/Jellyfin) integration."""
+"""Browse implementation for Media Browser (Emby/Jellyfin) integration."""
+
 
 import logging
 from typing import Any
@@ -17,7 +18,7 @@ from .const import (
     TITLE_NONE,
     TYPE_NONE,
     ImageType,
-    Key,
+    Item,
 )
 from .helpers import get_image_url
 from .hub import MediaBrowserHub
@@ -43,9 +44,9 @@ async def async_browse_media(
         can_play = False
 
     else:
-        item_type: str = item.get(Key.TYPE, "")
-        media_type: str = item.get(Key.MEDIA_TYPE, MEDIA_TYPE_NONE)
-        is_folder: bool = item.get(Key.IS_FOLDER, False)
+        item_type: str = item.get(Item.TYPE, "")
+        media_type: str = item.get(Item.MEDIA_TYPE, MEDIA_TYPE_NONE)
+        is_folder: bool = item.get(Item.IS_FOLDER, False)
 
         media_class = MEDIA_CLASS_MAP.get(
             item_type, MediaClass.DIRECTORY if is_folder else MEDIA_CLASS_NONE
@@ -55,10 +56,11 @@ async def async_browse_media(
             get_image_url(item, hub.server_url, ImageType.THUMB, True)
             or get_image_url(item, hub.server_url, ImageType.PRIMARY, True)
             or get_image_url(item, hub.server_url, ImageType.BACKDROP, True)
+            or get_image_url(item, hub.server_url, ImageType.SCREENSHOT, True)
         )
 
-        media_content_id = item.get(Key.ID, ID_NONE)
-        title = item.get(Key.NAME, TITLE_NONE)
+        media_content_id = item.get(Item.ID, ID_NONE)
+        title = item.get(Item.NAME, TITLE_NONE)
         can_play = (is_folder and item_type in PLAYABLE_FOLDERS) or (
             playable_types is not None and media_type in playable_types
         )
@@ -79,10 +81,10 @@ async def async_browse_media(
         result.children = [
             await async_browse_media(hub, child, playable_types, False)
             for child in await get_children(hub, item)
-            if child.get(Key.IS_FOLDER, False)
+            if child.get(Item.IS_FOLDER, False)
             or (
                 playable_types is not None
-                and child.get(Key.MEDIA_TYPE, MEDIA_TYPE_NONE) in playable_types
+                and child.get(Item.MEDIA_TYPE, MEDIA_TYPE_NONE) in playable_types
             )
         ]
 

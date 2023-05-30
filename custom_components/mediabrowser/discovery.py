@@ -10,7 +10,7 @@ from .const import (
     DISCOVERY_MESSAGE_JELLYFIN,
     DISCOVERY_PORT,
     DISCOVERY_TIMEOUT,
-    Key,
+    Discovery,
     ServerType,
 )
 
@@ -61,7 +61,7 @@ def _discover_message(
             data = sock.recv(1024)
             discovery = json.loads(data.decode("utf-8"))
 
-            if Key.ADDRESS in discovery and Key.ID in discovery:
+            if Discovery.ADDRESS in discovery and Discovery.ID in discovery:
                 result.append(discovery | {"Type": server_type})
             else:
                 _LOGGER.warning(

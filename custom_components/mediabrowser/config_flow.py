@@ -7,7 +7,6 @@ from copy import deepcopy
 from typing import Any
 
 import aiohttp
-import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, OptionsFlow
 from homeassistant.const import CONF_NAME, CONF_PASSWORD, CONF_URL, CONF_USERNAME
@@ -30,6 +29,10 @@ from .const import (
     CONF_DEVICE_ID,
     CONF_DEVICE_NAME,
     CONF_DEVICE_VERSION,
+    CONF_EVENTS_ACTIVITY_LOG,
+    CONF_EVENTS_OTHER,
+    CONF_EVENTS_SESSIONS,
+    CONF_EVENTS_TASKS,
     CONF_IGNORE_APP_PLAYERS,
     CONF_IGNORE_DLNA_PLAYERS,
     CONF_IGNORE_MOBILE_PLAYERS,
@@ -53,12 +56,15 @@ from .const import (
     DEFAULT_UPCOMING_MEDIA,
     DOMAIN,
     SENSOR_ITEM_TYPES,
+    KEY_ALL,
+    Discovery,
     EntityType,
-    Key,
+    Item,
+    Server,
 )
 from .discovery import discover_mb
 from .helpers import build_sensor_key_from_config, extract_sensor_key
-from .hub import ClientMismatchError, MediaBrowserHub, ServerOptions
+from .hub import ClientMismatchError, MediaBrowserHub
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -81,7 +87,7 @@ class MediaBrowserConfigFlow(ConfigFlow, domain=DOMAIN):  # type: ignore
     ) -> FlowResult:
         """Handle the initial discovery step."""
 
-        self.available_servers = {server[Key.ID]: server for server in discover_mb()}
+        self.available_servers = {server[Server.ID]: server for server in discover_mb()}
         for entry in self._async_current_entries(include_ignore=True):
             if entry.unique_id is not None:
                 self.available_servers.pop(entry.unique_id)
@@ -106,8 +112,8 @@ class MediaBrowserConfigFlow(ConfigFlow, domain=DOMAIN):  # type: ignore
         server_list = (
             {
                 server[
-                    Key.ID
-                ]: f'{server[Key.NAME] or "Unknown"} ({server[Key.ADDRESS]})'
+                    Discovery.ID
+                ]: f'{server[Discovery.NAME] or "Unknown"} ({server[Discovery.ADDRESS]})'
                 for server in self.available_servers.values()
             }
             if self.available_servers is not None
@@ -148,8 +154,8 @@ class MediaBrowserConfigFlow(ConfigFlow, domain=DOMAIN):  # type: ignore
         default_password = UNDEFINED
         if self.discovered_server_id is not None and self.available_servers is not None:
             server = self.available_servers[self.discovered_server_id]
-            default_url = server[Key.ADDRESS]
-            default_name = server[Key.NAME] or ""
+            default_url = server[Discovery.ADDRESS]
+            default_name = server[Discovery.NAME] or ""
 
         data_schema = vol.Schema(
             {
@@ -182,6 +188,8 @@ class MediaBrowserConfigFlow(ConfigFlow, domain=DOMAIN):  # type: ignore
         """Handle the reauthorization step."""
         errors: dict[str, str] = {}
         entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
+
+        assert entry is not None
 
         if user_input is not None:
             options = deepcopy(dict(entry.options))
@@ -246,6 +254,7 @@ class MediaBrowserOptionsFlow(OptionsFlow):
                 "auth",
                 "players",
                 "libraries",
+                "events",
                 "add_sensor",
                 "remove_sensor",
                 "advanced",
@@ -317,7 +326,42 @@ class MediaBrowserOptionsFlow(OptionsFlow):
                 {
                     vol.Required(
                         CONF_UPCOMING_MEDIA,
-                        default=self.options.get(CONF_UPCOMING_MEDIA),
+                        default=self.options.get(CONF_UPCOMING_MEDIA),  # type: ignore
+                    ): bool,
+                }
+            ),
+        )
+
+    async def async_step_events(self, user_input: dict[str, Any] | None) -> FlowResult:
+        """Handle the events step."""
+        if user_input:
+            self.options |= user_input
+            return self.async_create_entry(
+                title=self.options.get(
+                    CONF_NAME, self.options.get(CONF_CACHE_SERVER_NAME)
+                ),
+                data=self.options,
+            )
+
+        return self.async_show_form(
+            step_id="events",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_EVENTS_SESSIONS,
+                        default=self.options.get(CONF_EVENTS_SESSIONS),  # type: ignore
+                    ): bool,
+                    vol.Optional(
+                        CONF_EVENTS_ACTIVITY_LOG,
+                        default=self.options.get(CONF_EVENTS_ACTIVITY_LOG),  # type: ignore
+                    ): bool,
+                    vol.Optional(
+                        CONF_EVENTS_TASKS,
+                        default=self.options.get(CONF_EVENTS_TASKS),  # type: ignore
+                    ): bool,
+                    vol.Optional(
+                        CONF_EVENTS_OTHER,
+                        default=self.options.get(CONF_EVENTS_OTHER),  # type: ignore
                     ): bool,
                 }
             ),
@@ -464,15 +508,15 @@ class MediaBrowserOptionsFlow(OptionsFlow):
             DATA_HUB
         ]
 
-        user_list = {Key.ALL: "(All users)"} | {
+        user_list = {KEY_ALL: "(All users)"} | {
             user["Id"]: user["Name"]
             for user in sorted(await hub.async_get_users(), key=lambda x: x["Name"])
         }
 
-        library_list = {Key.ALL: "(All libraries)"} | {
-            library[Key.ID]: library[Key.NAME]
+        library_list = {KEY_ALL: "(All libraries)"} | {
+            library[Item.ID]: library[Item.NAME]
             for library in sorted(
-                await hub.async_get_libraries_raw(), key=lambda x: x[Key.NAME]
+                await hub.async_get_libraries(), key=lambda x: x[Item.NAME]
             )
         }
 
@@ -493,11 +537,11 @@ class MediaBrowserOptionsFlow(OptionsFlow):
                     ): vol.In(type_list),
                     vol.Required(
                         CONF_SENSOR_LIBRARY,
-                        default=Key.ALL,  # type: ignore
+                        default=KEY_ALL,  # type: ignore
                     ): vol.In(library_list),
                     vol.Required(
                         CONF_SENSOR_USER,
-                        default=Key.ALL,  # type: ignore
+                        default=KEY_ALL,  # type: ignore
                     ): vol.In(user_list),
                 }
             ),
@@ -578,7 +622,7 @@ async def _validate_config(
         options[CONF_PASSWORD] = password
         options.pop(CONF_CACHE_SERVER_API_KEY, None)
 
-    hub = MediaBrowserHub(ServerOptions(options))
+    hub = MediaBrowserHub(options)
     try:
         await hub.async_start(False)
     except aiohttp.ClientConnectionError:
@@ -591,6 +635,7 @@ async def _validate_config(
                 errors["base"] = "weak_auth"
             case _:
                 errors["base"] = "bad_request"
+        _LOGGER.exception("ERROR")
     except (TimeoutError, asyncio.TimeoutError):
         errors["base"] = "timeout"
     except ClientMismatchError:
@@ -618,6 +663,10 @@ async def _validate_config(
         options[CONF_CACHE_SERVER_PING] = hub.server_ping
         options[CONF_CACHE_SERVER_VERSION] = hub.server_version
         options[CONF_CACHE_SERVER_USER_ID] = hub.user_id
+        options[CONF_EVENTS_SESSIONS] = hub.send_session_events
+        options[CONF_EVENTS_ACTIVITY_LOG] = hub.send_activity_events
+        options[CONF_EVENTS_TASKS] = hub.send_task_events
+        options[CONF_EVENTS_OTHER] = hub.send_other_events
         return True
     finally:
         await hub.async_stop()

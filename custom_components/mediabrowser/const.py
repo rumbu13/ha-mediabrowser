@@ -40,6 +40,10 @@ CONF_CACHE_SERVER_VERSION = "cache_server_version"
 CONF_CACHE_SERVER_API_KEY = "cache_api_key"
 CONF_CACHE_SERVER_USER_ID = "cache_user_id"
 
+CONF_EVENTS_SESSIONS = "events_sessions"
+CONF_EVENTS_ACTIVITY_LOG = "events_activity_log"
+CONF_EVENTS_TASKS = "events_tasks"
+CONF_EVENTS_OTHER = "events_other"
 
 DEFAULT_SERVER_NAME = "Media Browser"
 DEFAULT_CLIENT_NAME = "Home Assistant"
@@ -55,6 +59,11 @@ DEFAULT_UPCOMING_MEDIA = False
 DEFAULT_PORT = 8096
 DEFAULT_SSL_PORT = 8920
 DEFAULT_USE_SSL = False
+
+DEFAULT_EVENTS_SESSIONS = False
+DEFAULT_EVENTS_ACTIVITY_LOG = False
+DEFAULT_EVENTS_TASKS = False
+DEFAULT_EVENTS_OTHER = True
 
 
 DATA_HUB = "hub"
@@ -95,10 +104,13 @@ DASHBOARD_MAP = {
     ServerType.JELLYFIN: "/web/index.html#!/dashboard",
 }
 
+KEY_ALL = "(all)"
+
 
 class ApiUrl(StrEnum):
     """MediaBrowser URLs"""
 
+    ACTIVITY_LOG_ENTRIES = "/System/ActivityLog/Entries"
     ALBUM_ARTISTS = "/AlbumArtists"
     ARTISTS = "/Artists"
     AUTH_KEYS = "/Auth/Keys"
@@ -127,7 +139,7 @@ class ApiUrl(StrEnum):
     YEARS = "/Years"
 
 
-class Key(StrEnum):
+class Item(StrEnum):
     """Key used across library"""
 
     ACCEPT = "Accept"
@@ -156,11 +168,13 @@ class Key(StrEnum):
     CHILD_COUNT = "ChildCount"
     CLIENT = "Client"
     COLLECTION_TYPE = "CollectionType"
+    COLLECTION_FOLDERS = "CollectionFolders"
     COMMUNITY_RATING = "CommunityRating"
     CONTAINER = "Container"
     CONTENT_TYPE = "Content-Type"
     CRITIC_RATING = "CriticRating"
     DATA = "Data"
+    DATE = "Date"
     DATE_CREATED = "DateCreated"
     DEVICE = "Device"
     DEVICE_ID = "DeviceId"
@@ -251,43 +265,52 @@ class Query(StrEnum):
     """Query parameters"""
 
     ARTIST_TYPE = "ArtistType"
+    ARTIST_IDS = "ArtistIds"
+    AUTO_OPEN_LIVE_STREAM = "AutoOpenLiveStream"
+    DEVICE_PROFILE = "DeviceProfile"
     GROUP_ITEMS_INTO_COLLECTIONS = "GroupItemsIntoCollections"
     FIELDS = "Fields"
+    GENRE_IDS = "GenreIds"
+    HEADER = "Header"
     IDS = "Ids"
     IS_HIDDEN = "isHidden"
+    IS_PLAYBACK = "IsPlayback"
     IS_VIRTUAL_ITEM = "IsVirtualItem"
     INCLUDE_ITEM_TYPES = "IncludeItemTypes"
     LIMIT = "Limit"
+    MIN_DATE = "MinDate"
     NAME_STARTS_WITH = "NameStartsWith"
     PARENT_ID = "ParentId"
+    PERSON_IDS = "PersonIds"
     RECURSIVE = "Recursive"
     SORT_BY = "SortBy"
     SORT_ORDER = "SortOrder"
+    STUDIO_IDS = "StudioIds"
+    TAG_IDS = "TagIds"
+    TEXT = "Text"
+    TIMEOUT_MS = "TimeoutMs"
+    USER_ID = "UserId"
+    YEARS = "Years"
 
 
 class Value(StrEnum):
-    """Values for query parameters"""
+    """Values for query parameters."""
 
-    ASCENDING = "Ascending"
-    APPLICATION_JSON = "application/json"
-    ARTIST = "Artist"
-    ALBUM_ARTIST = "AlbumArtist"
-    COMPOSER = "Composer"
-    DESCENDING = "Descending"
     FALSE = "false"
-    MEDIA_SOURCES = "MediaSources"
     TRUE = "true"
 
 
 class ItemType(StrEnum):
-    """Item types"""
+    """Item types."""
 
     AUDIO = "Audio"
     AUDIO_BOOK = "AudioBook"
+    ALBUM_ARTIST = "AlbumArtist"
     ARTIST = "Artist"
     BOOK = "Book"
     BOXSET = "BoxSet"
     CHANNEL = "Channel"
+    COLLECTION_FOLDER = "CollectionFolder"
     EPISODE = "Episode"
     GENRE = "Genre"
     LIVE_TV_CHANNEL = "LiveTvChannel"
@@ -303,20 +326,23 @@ class ItemType(StrEnum):
     PHOTO_ALBUM = "PhotoAlbum"
     PLAYLIST = "Playlist"
     PLAYLIST_FOLDER = "PlaylistFolder"
+    PREFIX = "Prefix"
     PROGRAM = "Program"
     RECORDING = "Recording"
     SEASON = "Season"
     SERIES = "Series"
     STUDIO = "Studio"
     VIDEO = "Video"
+    VIRTUAL = "Virtual"
     TAG = "Tag"
     TRAILER = "Trailer"
     TV_CHANNEL = "TvChannel"
     TV_PROGRAM = "TvProgram"
+    YEAR = "Year"
 
 
 class VirtualFolder(StrEnum):
-    """Custom virtual folders"""
+    """Custom virtual folders."""
 
     ALBUM_ARTISTS = "album_artists"
     ARTISTS = "artists"
@@ -352,7 +378,7 @@ class ImageType(StrEnum):
 
 
 class ImageCategory(StrEnum):
-    """Image caetgories"""
+    """Image caetegories."""
 
     PARENT = "Parent"
     ALBUM = "Album"
@@ -361,7 +387,7 @@ class ImageCategory(StrEnum):
 
 
 class EntityType(StrEnum):
-    """Suffixes for unique ids"""
+    """Suffixes for unique ids."""
 
     LIBRARY = "library"
     PLAYER = "player"
@@ -370,6 +396,177 @@ class EntityType(StrEnum):
     SESSIONS = "sessions"
     SHUTDOWN = "shutdown"
 
+
+class CollectionType(StrEnum):
+    """Suffixes for unique ids."""
+
+    AUDIOBOOKS = "audiobooks"
+    HOMEVIDEOS = "homevideos"
+    MOVIES = "movies"
+    MUSIC = "music"
+    MUSICVIDEOS = "musicvideos"
+    TVSHOWS = "tvshows"
+
+
+class SortOrder(StrEnum):
+    """Sort orders."""
+
+    ASCENDING = "Ascending"
+    DESCENDING = "Descending"
+
+
+class ArtistType(StrEnum):
+    """Artist types."""
+
+    ALBUM_ARTIST = "ArlbumArtist"
+    ARTIST = "Artist"
+    COMPOSER = "Composer"
+
+
+class SortBy(StrEnum):
+    """Sort by."""
+
+    DATE_CREATED = Item.DATE_CREATED
+    FILENAME = Item.FILENAME
+    IS_FOLDER = Item.IS_FOLDER
+    LIST_ITEM_ORDER = "ListItemOrder"
+    NAME = Item.NAME
+    PRODUCTION_YEAR = Item.PRODUCTION_YEAR
+    SORT_NAME = Item.SORT_NAME
+
+
+class Session(StrEnum):
+    """Session fields."""
+
+    APP_ICON_URL = "AppIconUrl"
+    APPLICATION_VERSION = "ApplicationVersion"
+    CLIENT = "Client"
+    DEVICE_ID = "DeviceId"
+    DEVICE_NAME = "DeviceName"
+    ID = "Id"
+    LAST_ACTIVITY_DATE = "LastActivityDate"
+    NOW_PLAYING_ITEM = "NowPlayingItem"
+    PLAY_STATE = "PlayState"
+    PLAYABLE_MEDIA_TYPES = "PlayableMediaTypes"
+    PLAYLIST_INDEX = "PlaylistIndex"
+    PLAYLIST_LENGTH = "PlaylistLength"
+    REMOTE_END_POINT = "RemoteEndPoint"
+    SUPPORTS_REMOTE_CONTROL = "SupportsRemoteControl"
+    SUPPORTED_COMMANDS = "SupportedCommands"
+    USER_NAME = "UserName"
+
+
+class PlayState(StrEnum):
+    """Play state keys."""
+
+    CAN_SEEK = "CanSeek"
+    IS_MUTED = "IsMuted"
+    IS_PAUSED = "IsPaused"
+    POSITION_TICKS = "PositionTicks"
+    REPEAT_MODE = "RepeatMode"
+    VOLUME_LEVEL = "VolumeLevel"
+
+
+class Auth(StrEnum):
+    """Authorization keys."""
+
+    DEVICE = "Device"
+    DEVICE_ID = "DeviceId"
+    MEDIA_BROWSER_CLIENT = "MediaBrowserClient"
+    VERSION = "Version"
+
+
+class Header(StrEnum):
+    """Http headers."""
+
+    ACCEPT = "Accept"
+    AUTHORIZATION = "x-emby-authorization"
+    CONTENT_TYPE = "Content-Type"
+
+
+class HeaderContentType(StrEnum):
+    """Content types."""
+
+    APPLICATION_JSON = "application/json"
+
+
+class Response(StrEnum):
+    """Response keys."""
+
+    ITEMS = "Items"
+    TOTAL_RECORD_COUNT = "TotalRecordCount"
+
+
+class Server(StrEnum):
+    """Server keys."""
+
+    ID = "Id"
+    OPERATING_SYSTEM = "OperatingSystem"
+    SERVER_NAME = "ServerName"
+    VERSION = "Version"
+
+
+class User(StrEnum):
+    """User keys."""
+
+    ID = "Id"
+    POLICY = "Policy"
+
+
+class Policy(StrEnum):
+    """Policy keys."""
+
+    IS_ADMINISTRATOR = "IsAdministrator"
+    IS_DISABLED = "IsDisabled"
+
+
+class Websocket(StrEnum):
+    """Websocket message keys."""
+
+    MESSAGE_TYPE = "MessageType"
+    DATA = "Data"
+
+
+class MessageType(StrEnum):
+    """Websocket message keys."""
+
+    FORCE_KEEP_ALIVE = "ForceKeepAlive"
+    KEEP_ALIVE = "KeepAlive"
+    SESSIONS = "Sessions"
+    SESSIONS_START = "SessionsStart"
+    SESSIONS_END = "SessionsEnd"
+
+
+class MediaSource(StrEnum):
+    """MediaSource keys."""
+
+    CONTAINER = "Container"
+    DIRECT_STREAM_URL = "DirectStreamUrl"
+    SUPPORTS_DIRECT_STREAM = "SupportsDirectStream"
+    SUPPORTS_TRANSCODING = "SupportsTranscoding"
+    TRANSCODING_CONTAINER = "TranscodingContainer"
+    TRANSCODING_URL = "TranscodingUrl"
+    BITRATE = "Bitrate"
+
+
+class Discovery(StrEnum):
+    """Dicovery keys."""
+
+    ID = "Id"
+    ADDRESS = "Address"
+    NAME = "Name"
+    TYPE = "Type"
+
+
+WEB_PLAYERS = {"Emby Web", "Jellyfin Web"}
+APP_PLAYERS = {"pyEmby", "HA", "Home Assistant", "ha"}
+MOBILE_PLAYERS = {
+    "Emby for Android",
+    "Emby for iOS",
+    "Jellyfin Android",
+    "Jellyfin iOS",
+}
+DLNA_PLAYERS = {"Emby Server DLNA", "DLNA"}
 
 ENTITY_TITLE_MAP = {
     EntityType.RESCAN: "Rescan Libraries",
@@ -614,18 +811,18 @@ SENSOR_ITEM_TYPES = {
 
 DEFAULT_SENSORS = [
     {
-        CONF_SENSOR_USER: Key.ALL,
-        CONF_SENSOR_LIBRARY: Key.ALL,
+        CONF_SENSOR_USER: KEY_ALL,
+        CONF_SENSOR_LIBRARY: KEY_ALL,
         CONF_SENSOR_ITEM_TYPE: ItemType.MOVIE,
     },
     {
-        CONF_SENSOR_USER: Key.ALL,
-        CONF_SENSOR_LIBRARY: Key.ALL,
+        CONF_SENSOR_USER: KEY_ALL,
+        CONF_SENSOR_LIBRARY: KEY_ALL,
         CONF_SENSOR_ITEM_TYPE: ItemType.EPISODE,
     },
     {
-        CONF_SENSOR_USER: Key.ALL,
-        CONF_SENSOR_LIBRARY: Key.ALL,
+        CONF_SENSOR_USER: KEY_ALL,
+        CONF_SENSOR_LIBRARY: KEY_ALL,
         CONF_SENSOR_ITEM_TYPE: ItemType.AUDIO,
     },
 ]
@@ -635,45 +832,49 @@ TICKS_PER_MINUTE = TICKS_PER_SECOND * 60
 
 
 LATEST_QUERY_FIELDS = {
-    Key.ALBUM_ID,
-    Key.ALBUM_PRIMARY_IMAGE_TAG,
-    Key.ARTISTS,
-    Key.BACKDROP_IMAGE_TAGS,
-    Key.CHANNEL_PRIMARY_IMAGE_TAG,
-    Key.COMMUNITY_RATING,
-    Key.CRITIC_RATING,
-    Key.DATE_CREATED,
-    Key.GENRES,
-    Key.IMAGE_TAGS,
-    Key.INDEX_NUMBER,
-    Key.OFFICIAL_RATING,
-    Key.OVERVIEW,
-    Key.PARENT_ART_IMAGE_TAG,
-    Key.PARENT_ART_ITEM_ID,
-    Key.PARENT_BACKDROP_IMAGE_TAGS,
-    Key.PARENT_BACKDROP_ITEM_ID,
-    Key.PARENT_ID,
-    Key.PARENT_LOGO_IMAGE_TAG,
-    Key.PARENT_INDEX_NUMBER,
-    Key.PARENT_PRIMARY_IMAGE_ITEM_ID,
-    Key.PARENT_PRIMARY_IMAGE_TAG,
-    Key.PARENT_THUMB_IMAGE_TAG,
-    Key.PARENT_THUMB_ITEM_ID,
-    Key.PREMIERE_DATE,
-    Key.PRODUCTION_YEAR,
-    Key.RUNTIME_TICKS,
-    Key.SEASON_NAME,
-    Key.SCREENSHOT_IMAGE_TAGS,
-    Key.SERIES_ID,
-    Key.SERIES_NAME,
-    Key.SERIES_PRIMARY_IMAGE_TAG,
-    Key.SERIES_THUMB_IMAGE_TAG,
-    Key.STUDIOS,
-    Key.TAGLINES,
+    Item.ALBUM_ID,
+    Item.ALBUM_PRIMARY_IMAGE_TAG,
+    Item.ARTISTS,
+    Item.BACKDROP_IMAGE_TAGS,
+    Item.CHANNEL_PRIMARY_IMAGE_TAG,
+    Item.COMMUNITY_RATING,
+    Item.CRITIC_RATING,
+    Item.DATE_CREATED,
+    Item.GENRES,
+    Item.IMAGE_TAGS,
+    Item.INDEX_NUMBER,
+    Item.OFFICIAL_RATING,
+    Item.OVERVIEW,
+    Item.PARENT_ART_IMAGE_TAG,
+    Item.PARENT_ART_ITEM_ID,
+    Item.PARENT_BACKDROP_IMAGE_TAGS,
+    Item.PARENT_BACKDROP_ITEM_ID,
+    Item.PARENT_ID,
+    Item.PARENT_LOGO_IMAGE_TAG,
+    Item.PARENT_INDEX_NUMBER,
+    Item.PARENT_PRIMARY_IMAGE_ITEM_ID,
+    Item.PARENT_PRIMARY_IMAGE_TAG,
+    Item.PARENT_THUMB_IMAGE_TAG,
+    Item.PARENT_THUMB_ITEM_ID,
+    Item.PREMIERE_DATE,
+    Item.PRODUCTION_YEAR,
+    Item.RUNTIME_TICKS,
+    Item.SEASON_NAME,
+    Item.SCREENSHOT_IMAGE_TAGS,
+    Item.SERIES_ID,
+    Item.SERIES_NAME,
+    Item.SERIES_PRIMARY_IMAGE_TAG,
+    Item.SERIES_THUMB_IMAGE_TAG,
+    Item.STUDIOS,
+    Item.TAGLINES,
 }
 
-LATEST_QUERY_SORT_BY = [Key.DATE_CREATED, Key.SORT_NAME, Key.PRODUCTION_YEAR]
-LATEST_QUERY_SORT_ORDER = [Value.DESCENDING, Value.ASCENDING, Value.DESCENDING]
+LATEST_QUERY_SORT_BY = [SortBy.DATE_CREATED, SortBy.SORT_NAME, SortBy.PRODUCTION_YEAR]
+LATEST_QUERY_SORT_ORDER = [
+    SortOrder.DESCENDING,
+    SortOrder.ASCENDING,
+    SortOrder.DESCENDING,
+]
 LATEST_QUERY_PARAMS: dict[str, Any] = {
     Query.RECURSIVE: Value.TRUE,
     Query.IS_VIRTUAL_ITEM: Value.FALSE,
@@ -685,340 +886,65 @@ LATEST_QUERY_PARAMS: dict[str, Any] = {
 }
 
 VIRTUAL_FILTER_MAP = {
-    VirtualFolder.ARTISTS: "ArtistIds",
-    VirtualFolder.COMPOSERS: "ArtistIds",
-    VirtualFolder.ALBUM_ARTISTS: "ArtistIds",
-    VirtualFolder.PERSONS: "PersonIds",
-    VirtualFolder.GENRES: "GenreIds",
-    VirtualFolder.STUDIOS: "StudioIds",
-    VirtualFolder.TAGS: "TagIds",
-    VirtualFolder.YEARS: "Years",
+    VirtualFolder.ARTISTS: Query.ARTIST_IDS,
+    VirtualFolder.COMPOSERS: Query.ARTIST_IDS,
+    VirtualFolder.ALBUM_ARTISTS: Query.ARTIST_IDS,
+    VirtualFolder.PERSONS: Query.PERSON_IDS,
+    VirtualFolder.GENRES: Query.GENRE_IDS,
+    VirtualFolder.STUDIOS: Query.STUDIO_IDS,
+    VirtualFolder.TAGS: Query.TAG_IDS,
+    VirtualFolder.YEARS: Query.YEARS,
 }
 
-DEVICE_PROFILE = {
-    "MaxStaticBitrate": 140000000,
-    "MaxStreamingBitrate": 140000000,
-    "MusicStreamingTranscodingBitrate": 384000,
-    "DirectPlayProfiles": [
-        {"Container": "aac", "Type": "Audio"},
-        {"Container": "aac", "Type": "Audio", "AudioCodec": "aac"},
-        {
-            "Container": "flv",
-            "Type": "Video",
-            "VideoCodec": "h264",
-            "AudioCodec": "aac,mp3",
-        },
-        {"Container": "flac", "Type": "Audio"},
-        {"Container": "m4a", "AudioCodec": "aac", "Type": "Audio"},
-        {"Container": "m4b", "AudioCodec": "aac", "Type": "Audio"},
-        {
-            "Container": "mkv",
-            "Type": "Video",
-            "VideoCodec": "h264,h265,hevc,av1,vp8,vp9",
-            "AudioCodec": "mp3,aac,opus,flac,vorbis",
-        },
-        {
-            "Container": "mov",
-            "Type": "Video",
-            "VideoCodec": "h264",
-            "AudioCodec": "mp3,aac,opus,flac,vorbis",
-        },
-        {"Container": "mp2,mp3", "Type": "Audio", "AudioCodec": "mp2"},
-        {"Container": "mp3", "Type": "Audio"},
-        {"Container": "mp3", "Type": "Audio", "AudioCodec": "mp3"},
-        {"Container": "mp4", "AudioCodec": "aac", "Type": "Audio"},
-        {
-            "Container": "mp4,m4v",
-            "Type": "Video",
-            "VideoCodec": "h264,h265,hevc,av1,vp8,vp9",
-            "AudioCodec": "mp3,aac,opus,flac,vorbis",
-        },
-        {"Container": "ogg", "Type": "Audio"},
-        {"Container": "opus", "Type": "Audio"},
-        {"Container": "wav", "Type": "Audio"},
-        {"Container": "wav", "Type": "Audio", "AudioCodec": "PCM_S16LE,PCM_S24LE"},
-        {"Container": "webma,webm", "Type": "Audio"},
-        {"Container": "webm", "AudioCodec": "webma", "Type": "Audio"},
-        {"Container": "webm", "AudioCodec": "opus", "Type": "Audio"},
-        {
-            "Container": "webm",
-            "Type": "Video",
-            "AudioCodec": "vorbis,opus",
-            "VideoCodec": "av1,vp8,vp9",
-        },
-    ],
+DEVICE_PROFILE_BASIC = {
+    "MaxStreamingBitrate": 25000 * 1000,
+    "MusicStreamingTranscodingBitrate": 1920000,
+    "TimelineOffsetSeconds": 5,
     "TranscodingProfiles": [
         {
-            "Container": "aac",
             "Type": "Audio",
-            "AudioCodec": "aac",
-            "Context": "Streaming",
-            "Protocol": "hls",
-            "MaxAudioChannels": "2",
-            "MinSegments": "1",
-            "BreakOnNonKeyFrames": True,
-        },
-        {
-            "Container": "aac",
-            "Type": "Audio",
-            "AudioCodec": "aac",
-            "Context": "Streaming",
-            "Protocol": "http",
-            "MaxAudioChannels": "2",
-        },
-        {
-            "Container": "aac",
-            "Type": "Audio",
-            "AudioCodec": "aac",
-            "Context": "Static",
-            "Protocol": "http",
-            "MaxAudioChannels": "2",
-        },
-        {
-            "Container": "m4s,ts",
-            "Type": "Video",
-            "AudioCodec": "mp3,aac",
-            "VideoCodec": "h264,h265,hevc",
-            "Context": "Streaming",
-            "Protocol": "hls",
-            "MaxAudioChannels": "2",
-            "MinSegments": "1",
-            "BreakOnNonKeyFrames": True,
-            "ManifestSubtitles": "vtt",
-        },
-        {
-            "Container": "mkv",
-            "Type": "Video",
-            "AudioCodec": "mp3,aac,opus,flac,vorbis",
-            "VideoCodec": "h264,h265,hevc,av1,vp8,vp9",
-            "Context": "Static",
-            "MaxAudioChannels": "2",
-            "CopyTimestamps": True,
-        },
-        {
             "Container": "mp3",
-            "Type": "Audio",
-            "AudioCodec": "mp3",
-            "Context": "Streaming",
             "Protocol": "http",
+            "AudioCodec": "mp3",
             "MaxAudioChannels": "2",
         },
         {
-            "Container": "mp3",
-            "Type": "Audio",
-            "AudioCodec": "mp3",
-            "Context": "Static",
-            "Protocol": "http",
-            "MaxAudioChannels": "2",
-        },
-        {
+            "Type": "Video",
             "Container": "mp4",
+            "Protocol": "http",
+            "AudioCodec": "aac,mp3,opus,flac,vorbis",
+            "VideoCodec": "h264,mpeg4,mpeg2video",
+            "MaxAudioChannels": "6",
+        },
+        {"Container": "jpeg", "Type": "Photo"},
+    ],
+    "DirectPlayProfiles": [
+        {"Type": "Audio", "Container": "mp3", "AudioCodec": "mp3"},
+        {"Type": "Audio", "Container": "m4a,m4b", "AudioCodec": "aac"},
+        {
             "Type": "Video",
-            "AudioCodec": "mp3,aac,opus,flac,vorbis",
-            "VideoCodec": "h264",
-            "Context": "Static",
-            "Protocol": "http",
-        },
-        {
-            "Container": "opus",
-            "Type": "Audio",
-            "AudioCodec": "opus",
-            "Context": "Streaming",
-            "Protocol": "http",
-            "MaxAudioChannels": "2",
-        },
-        {
-            "Container": "opus",
-            "Type": "Audio",
-            "AudioCodec": "opus",
-            "Context": "Static",
-            "Protocol": "http",
-            "MaxAudioChannels": "2",
-        },
-        {
-            "Container": "wav",
-            "Type": "Audio",
-            "AudioCodec": "wav",
-            "Context": "Streaming",
-            "Protocol": "http",
-            "MaxAudioChannels": "2",
-        },
-        {
-            "Container": "wav",
-            "Type": "Audio",
-            "AudioCodec": "wav",
-            "Context": "Static",
-            "Protocol": "http",
-            "MaxAudioChannels": "2",
-        },
-        {
-            "Container": "webm",
-            "Type": "Video",
-            "AudioCodec": "vorbis",
-            "VideoCodec": "vpx",
-            "Context": "Streaming",
-            "Protocol": "http",
-            "MaxAudioChannels": "2",
-        },
-        {
-            "Container": "ts",
-            "Type": "Audio",
-            "AudioCodec": "aac",
-            "Context": "Streaming",
-            "Protocol": "hls",
-            "MaxAudioChannels": "2",
-            "MinSegments": "1",
-            "BreakOnNonKeyFrames": True,
-        },
-        {
-            "Container": "ts",
-            "Type": "Video",
-            "AudioCodec": "aac,mp3",
-            "VideoCodec": "h264",
-            "Context": "Streaming",
-            "Protocol": "hls",
-            "MaxAudioChannels": "2",
-            "MinSegments": "1",
-            "BreakOnNonKeyFrames": True,
+            "Container": "mp4,m4v",
+            "AudioCodec": "aac,mp3,opus,flac,vorbis",
+            "VideoCodec": "h264,mpeg4,mpeg2video",
+            "MaxAudioChannels": "6",
         },
     ],
+    "ResponseProfiles": [],
     "ContainerProfiles": [],
-    "CodecProfiles": [
-        {
-            "Type": "VideoAudio",
-            "Codec": "aac",
-            "Conditions": [
-                {
-                    "Condition": "Equals",
-                    "Property": "IsSecondaryAudio",
-                    "Value": "false",
-                    "IsRequired": False,
-                }
-            ],
-        },
-        {
-            "Type": "VideoAudio",
-            "Conditions": [
-                {
-                    "Condition": "Equals",
-                    "Property": "IsSecondaryAudio",
-                    "Value": "false",
-                    "IsRequired": False,
-                }
-            ],
-        },
-        {
-            "Type": "Video",
-            "Codec": "h264",
-            "Conditions": [
-                {
-                    "Condition": "NotEquals",
-                    "Property": "IsAnamorphic",
-                    "Value": "true",
-                    "IsRequired": False,
-                },
-                {
-                    "Condition": "NotEquals",
-                    "Property": "IsAnamorphic",
-                    "Value": "true",
-                    "IsRequired": False,
-                },
-                {
-                    "Condition": "EqualsAny",
-                    "Property": "VideoProfile",
-                    "Value": "high|main|baseline|constrained baseline|high 10",
-                    "IsRequired": False,
-                },
-                {
-                    "Condition": "EqualsAny",
-                    "Property": "VideoRangeType",
-                    "Value": "SDR",
-                    "IsRequired": False,
-                },
-                {
-                    "Condition": "LessThanEqual",
-                    "Property": "VideoLevel",
-                    "Value": "52",
-                    "IsRequired": False,
-                },
-                {
-                    "Condition": "NotEquals",
-                    "Property": "IsInterlaced",
-                    "Value": "true",
-                    "IsRequired": False,
-                },
-            ],
-        },
-        {
-            "Type": "Video",
-            "Codec": "hevc",
-            "Conditions": [
-                {
-                    "Condition": "NotEquals",
-                    "Property": "IsAnamorphic",
-                    "Value": "true",
-                    "IsRequired": False,
-                },
-                {
-                    "Condition": "EqualsAny",
-                    "Property": "VideoProfile",
-                    "Value": "main|main 10",
-                    "IsRequired": False,
-                },
-                {
-                    "Condition": "EqualsAny",
-                    "Property": "VideoRangeType",
-                    "Value": "SDR",
-                    "IsRequired": False,
-                },
-                {
-                    "Condition": "LessThanEqual",
-                    "Property": "VideoLevel",
-                    "Value": "183",
-                    "IsRequired": False,
-                },
-                {
-                    "Condition": "NotEquals",
-                    "Property": "IsInterlaced",
-                    "Value": "true",
-                    "IsRequired": False,
-                },
-            ],
-        },
-        {
-            "Type": "Video",
-            "Codec": "vp9",
-            "Conditions": [
-                {
-                    "Condition": "EqualsAny",
-                    "Property": "VideoRangeType",
-                    "Value": "SDR|HDR10|HLG",
-                    "IsRequired": False,
-                }
-            ],
-        },
-        {
-            "Type": "Video",
-            "Codec": "av1",
-            "Conditions": [
-                {
-                    "Condition": "EqualsAny",
-                    "Property": "VideoRangeType",
-                    "Value": "SDR|HDR10|HLG",
-                    "IsRequired": False,
-                }
-            ],
-        },
-    ],
+    "CodecProfiles": [],
     "SubtitleProfiles": [
-        {"Format": "vtt", "Method": "Hls"},
-        {"Format": "eia_608", "Method": "VideoSideData", "Protocol": "hls"},
-        {"Format": "eia_708", "Method": "VideoSideData", "Protocol": "hls"},
-        {"Format": "vtt", "Method": "External"},
+        {"Format": "srt", "Method": "External"},
+        {"Format": "srt", "Method": "Embed"},
         {"Format": "ass", "Method": "External"},
+        {"Format": "ass", "Method": "Embed"},
+        {"Format": "sub", "Method": "Embed"},
+        {"Format": "sub", "Method": "External"},
+        {"Format": "ssa", "Method": "Embed"},
         {"Format": "ssa", "Method": "External"},
-    ],
-    "ResponseProfiles": [
-        {"Type": "Video", "Container": "m4v", "MimeType": "video/mp4"}
+        {"Format": "smi", "Method": "Embed"},
+        {"Format": "smi", "Method": "External"},
+        {"Format": "pgssub", "Method": "Embed"},
+        {"Format": "dvdsub", "Method": "Embed"},
+        {"Format": "pgs", "Method": "Embed"},
     ],
 }

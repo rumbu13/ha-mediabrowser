@@ -1,5 +1,6 @@
 """The Media Source implementation for the MediaBrowser integration."""
 
+import logging
 from typing import Any
 
 from homeassistant.components.media_player import MediaClass
@@ -21,15 +22,17 @@ from .const import (
     MEDIA_TYPE_NONE,
     TITLE_NONE,
     ImageType,
-    Key,
+    Item,
     Query,
+    Response,
     ServerType,
-    Value,
 )
 from .errors import BrowseMediaError
 from .helpers import get_image_url
 from .hub import MediaBrowserHub
 from .icons import EMBY_ICON, JELLYFIN_ICON
+
+_LOGGER = logging.getLogger(__name__)
 
 PLAYABLE_MEDIA_TYPES = {"Audio", "Video", "Photo"}
 
@@ -49,6 +52,7 @@ class MBSource(MediaSource):
     name: str = "Emby/Jellyfin"
 
     def __init__(self, hubs: list[MediaBrowserHub]) -> None:
+        """Create a new media source."""
         super().__init__(DOMAIN)
         self.hubs = {hub.server_id: hub for hub in hubs}
 
@@ -61,30 +65,31 @@ class MBSource(MediaSource):
 
         media_item = (
             await hub.async_get_items(
-                {Query.FIELDS: Value.MEDIA_SOURCES, Query.IDS: parts[1]}
+                {Query.FIELDS: Item.MEDIA_SOURCES, Query.IDS: parts[1]}
             )
-        )[Key.ITEMS][0]
+        )[Response.ITEMS][0]
 
         url: str | None = None
-        match media_item.media_type:
+        match media_item.get(Item.MEDIA_TYPE, ""):
             case "Video" | "Audio":
                 url, mime_type = await get_stream_url(
-                    hub, parts[1], media_item.get(Key.MEDIA_TYPE)
+                    hub, parts[1], media_item.get(Item.MEDIA_TYPE)
                 )
             case "Photo":
                 url = _get_photo_url(hub, parts[1])
                 mime_type = "image/jpeg"
             case _:
                 raise BrowseMediaError(
-                    f"Unsupported media type:{media_item.media_type}"
+                    f"Unsupported media type:{media_item.get(Item.MEDIA_TYPE, '')}"
                 )
 
         if mime_type is not None and url is not None:
-            return PlayMedia(url, media_item.mime_type)
+            return PlayMedia(url, mime_type)
 
         raise BrowseMediaError(f"Cannot obtain mime information for {item.identifier}")
 
     async def async_browse_media(self, item: MediaSourceItem) -> BrowseMediaSource:
+        """Browse the specified item."""
         if not item.identifier:
             return await self._async_browse_hubs()
 
@@ -131,23 +136,28 @@ class MBSource(MediaSource):
             media_class = MediaClass.DIRECTORY
             media_content_type = MEDIA_TYPE_NONE
             media_content_id = hub.server_id
-            title = hub.server_name
+            title = hub.name
             can_expand = True
             can_play = False
             thumb = EMBY_ICON if hub.server_type == ServerType.EMBY else JELLYFIN_ICON
 
         else:
-            item_type: str = item.get(Key.TYPE, "")
-            media_type: str = item.get(Key.MEDIA_TYPE, MEDIA_TYPE_NONE)
-            is_folder: bool = item.get(Key.IS_FOLDER, False)
+            item_type: str = item.get(Item.TYPE, "")
+            media_type: str = item.get(Item.MEDIA_TYPE, MEDIA_TYPE_NONE)
+            is_folder: bool = item.get(Item.IS_FOLDER, False)
 
             media_class = MEDIA_CLASS_MAP.get(
                 item_type, MediaClass.DIRECTORY if is_folder else MEDIA_CLASS_NONE
             )
             media_content_type = MEDIA_TYPE_MAP.get(item_type, item_type)
-            thumb = get_image_url(item, hub.server_url, ImageType.THUMB, True)
-            media_content_id = f"{hub.server_id}/{item.get(Key.ID)}"
-            title = item.get(Key.NAME, TITLE_NONE)
+            thumb = thumb = (
+                get_image_url(item, hub.server_url, ImageType.THUMB, True)
+                or get_image_url(item, hub.server_url, ImageType.PRIMARY, True)
+                or get_image_url(item, hub.server_url, ImageType.BACKDROP, True)
+                or get_image_url(item, hub.server_url, ImageType.SCREENSHOT, True)
+            )
+            media_content_id = f"{hub.server_id}/{item.get(Item.ID)}"
+            title = item.get(Item.NAME, TITLE_NONE)
             can_play = media_type in PLAYABLE_MEDIA_TYPES
             can_expand = is_folder
 
@@ -167,8 +177,8 @@ class MBSource(MediaSource):
             result.children = [
                 await self._async_browse_item(hub, child, False)
                 for child in await get_children(hub, item)
-                if child.get(Key.IS_FOLDER, False)
-                or child.get(Key.MEDIA_TYPE, MEDIA_TYPE_NONE) in PLAYABLE_MEDIA_TYPES
+                if child.get(Item.IS_FOLDER, False)
+                or child.get(Item.MEDIA_TYPE, MEDIA_TYPE_NONE) in PLAYABLE_MEDIA_TYPES
             ]
 
         return result

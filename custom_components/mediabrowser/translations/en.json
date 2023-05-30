@@ -48,6 +48,7 @@
                     "auth": "Configure authentication",
                     "players": "Media Players options",
                     "libraries": "Library sensors options",
+                    "events": "Events configuration",
                     "add_sensor": "Add a sensor",
                     "remove_sensor": "Remove a sensor",
                     "advanced": "Advanced options"
@@ -88,6 +89,21 @@
                     "ignore_mobile_players": "Do not create media players for mobile sessions",
                     "ignore_app_players": "Do not create media players for known integrations",
                     "purge_players": "Automatically remove unavailable media players"
+                }
+            },
+            "events": {
+                "title": "Event configuration",
+                "data": {
+                    "events_sessions": "Send events on session changes",
+                    "events_activity_log": "Send events for user activity",
+                    "events_tasks": "Send events for tasks",
+                    "events_other": "Send other events"
+                },
+                "data_description": {
+                    "events_sessions": "Send an event everytime a session changes, is added or is removed",
+                    "events_activity_log": "Send an event everytime a activity is performed on the server",
+                    "events_tasks": "Send an event every time a task is created, updated or finished",
+                    "events_other": "Send all other events"
                 }
             },
             "add_sensor": {
