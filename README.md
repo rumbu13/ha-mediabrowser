@@ -23,6 +23,7 @@ This integration support both media server types. The following components are i
 - [Services][services] for sending commands or messages to active sessions
 - [Server Button][button] for rescanning, rebooting or stopping your server
 - [Play Media Service][play_media] allowing you to play anything from your libraries based on various search criteria
+- [Events][events] for pretty much every message sent by the server
 
 
 
@@ -42,11 +43,17 @@ This integration support both media server types. The following components are i
 
 Configuration is done using user interface. The integration will try to detect automatically your server settings. In order to detect your Emby or Jellyfin servers, please configure your server firewall to allow UDP incoming packets on port 7359. If more than one server is found, a selection dialog will be displayed.
 
-![select server_step](assets/select_server.png)
+After selecting one of the available servers or if the integration discovers only one instance running in your network, the configuration dialog is displayed. Enter your Emby or Jellyfin *URL address* including the *port number* and the *HTTP protocol* to use.
 
-After selecting one of the available servers or if the integration discovers only one instance running in your network, the configuration dialog is diaplayed. Please note that *Name* or *API Key* can be changed later. In order to change the *Host* or the *Port*, the configuration must be deleted and created again.
+-----------------------------------
+|Setting|Required|Example|Comments|
+-----------------------------------
+|`URL`|yes|http://myflix:8096|Enter your Emby pr Jellyfin address. If you omit your port number, the integration will assume a *default port* (8096). Put *https* in formt of your url to *use SSL*|
+|`Username`|yes|Administrator|User name used to make various requests to the server. Please use an *administrative account* in order to let the integration access all libraries.
+|`Password`|yes|-|Password used to authenticate
+|`Server name`|no|Myflix|Custom name of your server. This is used especialyy for entity naming. Leave blank to use the *default server name*
+-----------------------------------
 
-![config_manual_step](assets/config_manual.png "Configuration")
 
 Configuration is done at these step, a media player is created for each of the server sessions and three default library sensors are also craeted for your *Movies*, *Series* and *Songs*.
 
