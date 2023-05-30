@@ -194,7 +194,7 @@ def snake_cased_json(original: Any | None) -> Any | None:
 
 def autolog(message):
     "Automatically log the current function details."
-    func = inspect.currentframe().f_back.f_code
+    func = inspect.currentframe().f_back.f_code  # type: ignore
     _LOGGER.debug(
         "%s: %s in %s:%i", message, func.co_name, func.co_filename, func.co_firstlineno
     )
