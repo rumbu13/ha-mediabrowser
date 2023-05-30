@@ -299,8 +299,10 @@ class MediaBrowserHub:
 
     async def async_get_items(self, params: dict[str, Any]) -> dict[str, Any]:
         """Gets a list of items."""
-        await self._async_needs_authentication()
-        return await self._async_rest_get_json(ApiUrl.ITEMS, params)
+        # jellyfin crashes sometimes if using /Items, providing 500 Internal server error
+        return await self.async_get_user_items(self.user_id, params)  # type: ignore
+        # await self._async_needs_authentication()
+        # return await self._async_rest_get_json(ApiUrl.ITEMS, params)
 
     async def async_get_libraries(self) -> list[dict[str, Any]]:
         """Gets the current server libraries."""
