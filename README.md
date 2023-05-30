@@ -17,9 +17,9 @@ _Home Assistant integration for [Emby][emby] and [Jellyfin][jellyfin]._
 
 This integration support both media server types and can manage multiple servers. The following components are installed:
 - [Media Source][mediasource] for browsing your server(s) libraries
-- [Media Player][mediaplayer], one for each connected session
-- [Session Sensor][sensor] for active sessions
-- [Library Sensor][sensor], custom sensors for libraries, item types and users
+- [Media Player](#media-player), one for each connected session
+- [Session Sensor](#sessions-sensor) for active sessions
+- [Library Sensor](#library-sensor), custom sensors for libraries, item types and users
 - [Services][services] for sending commands or messages to active sessions
 - [Server Button][button] for rescanning, rebooting or stopping your server
 - [Play Media Service][play_media] allowing you to play anything from your libraries based on various search criteria
@@ -118,6 +118,51 @@ Previously created sensors can be removed. Select the sensor to remove in the di
 |Timeout|How much time to wait before considering that your connection to the server is down|
 
 Generally speaking, it's better to not touch this settings, but if you need to clearly identify this integration in your Emby or Jellyfin server, this is the place to do it.
+
+## Entities
+
+### Buttons
+The integration will create three buttons:
+- one for restarting the server
+- one for stopping the server
+- one for rescanning libraries
+
+### Media Players
+Based on the [configuration options](#media-players-options), the integration will create multiple media players. Media players are created dinamically based on the online sessions reported by the server.
+
+### Sessions sensor
+The state of this sensor will report the *number of active sessions*. Supplementari, the attributes will display all sessions as a list with the following information:
+- `user_name`
+- `client`
+- `device_name`
+- `device_id`
+- `application_version`
+- `remote_end_point`
+- `supports_remote_control`
+- `app_icon_url`
+
+### Library sensor
+The state of this sensor will display the number of items in the library, based on the criteria you selected previously. Additionaly, the attributes will contain the following information about the newest 5 items:
+- `id`
+- `name`
+- `community_rating`
+- `critic_rating`
+- `official_rating`
+- `album`
+- `season_name`
+- `series_name`
+- `overview`
+- `production_year`
+- `date_created`
+- `premiere_date`
+- `runtime`
+- `episode`
+- `studios`
+- `genres`
+- `artists`
+- `tagline`
+- various image links (`primary`, `backdrop`, `art`, etc)
+
 
 ## Services
 ### Service mediabrowser.send_message
