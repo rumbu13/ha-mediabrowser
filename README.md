@@ -69,26 +69,26 @@ Selecting Media Player option will alow you to control how the integration creat
 
 |Setting|Comments|
 |-|-|
-|Ignore web players|The integration will not create media players for web sessions|
-|Ignore DLNA players|The integration will not create media players for DLNA sessions|
-|Ignore mobile players|The integration will not create media players for mobile sessions|
-|Ignore application players|The integration will not create media players for known applications (e.g other integrations)|
-|Auto purge media players|By default, media players which don't have a corresponding session on your server will stay in the entity registry as *unavailable*. This can happen when you manually delete on your server a device or when you choose to ignore some kind of players and they are not reported anymore to Home Assistant. In order to auto delete them, check the *purge* option, otherwise you can go to your *Entity Registry* in Home Assistant and delete them manually.|
+|`Ignore web players`|The integration will not create media players for web sessions|
+|`Ignore DLNA players`|The integration will not create media players for DLNA sessions|
+|`Ignore mobile players`|The integration will not create media players for mobile sessions|
+|`Ignore application players`|The integration will not create media players for known applications (e.g other integrations)|
+|`Auto purge media players`|By default, media players which don't have a corresponding session on your server will stay in the entity registry as *unavailable*. This can happen when you manually delete on your server a device or when you choose to ignore some kind of players and they are not reported anymore to Home Assistant. In order to auto delete them, check the *purge* option, otherwise you can go to your *Entity Registry* in Home Assistant and delete them manually.|
 
 ### Library sensors options
 
 |Setting|Comments|
 |-|-|
-|Provide data for upcoming media card|Library sensors provide already in the attributes information about the latest media added on your server, but also can provide the same information in a special format intended to be displayed in the well-known [Upcoming Media Card][upcoming-media-card].|
+|`Provide data for upcoming media card`|Library sensors provide already in the attributes information about the latest media added on your server, but also can provide the same information in a special format intended to be displayed in the well-known [Upcoming Media Card][upcoming-media-card].|
 
 ### Events options
 
 |Setting|Resource Intensive|Comments|
 |-|-|-|
-|Send events on session changes|yes|Fire a Home Assistant event every time a session is added, removed or changed |
-|Send events for user activity|yes|Fire a Home Assistant event every time a user has performed an action|
-|Send events for tasks|yes|Fire a Home Assistant event every time a task is created, ended or is reporting progress|
-|Send other events|no|Fire a Home Assistant other events.
+|`Send events on session changes`|yes|Fire a Home Assistant event every time a session is added, removed or changed |
+|`Send events for user activity`|yes|Fire a Home Assistant event every time a user has performed an action|
+|`Send events for tasks`|yes|Fire a Home Assistant event every time a task is created, ended or is reporting progress|
+|`Send other events`|no|Fire a Home Assistant other events.
 
 Please note that some events are resource intensive and will flood the *Home Assistant Event Bus*. Enable them with care.
 
@@ -96,9 +96,9 @@ Please note that some events are resource intensive and will flood the *Home Ass
 
 |Setting|Comments|
 |-|-|
-|Item type|Select the type of media you wang the monitor, e.g. Movies, Songs, Artists, Genres|
-|Library|Select the library were the statistics will be calculated|
-|User|Select the username which will be used as point of view when extractng statistics|
+|`Item type`|Select the type of media you wang the monitor, e.g. Movies, Songs, Artists, Genres|
+|`Library`|Select the library were the statistics will be calculated|
+|`User`|Select the username which will be used as point of view when extractng statistics|
 
 Please note that you cannot create two library sensors for the same combination of *type*, *library* and *user*.
 
@@ -192,6 +192,34 @@ data:
   media_content_type: movie
 ```
 
+## Events
+
+Various events can be fired by the integration, all of them starting with `mediabrowser_` Depending on the event, several information is passed along with it. Unfortunatelly the only way to know what data is avaialble is to look into schemas published by [Emby][http://swagger.emby.media/?staticview=true#/] or [Jellyfin][https://api.jellyfin.org/] or in their source code. Of course, you can experient yourself in the *Developper Tools* by subscribing to such events:
+
+- `mediabrowser_session_changed` (resource intensive, disabled by default)
+- `mediabrowser_user_data_changed`
+- `mediabrowser_restart_required`
+- `mediabrowser_server-shutting_down`
+- `mediabrowser_server-restarting`
+- `mediabrowser_library_changed`
+- `mediabrowser_user_deleted`
+- `mediabrowser_user_updated`
+- `mediabrowser_series_timer_created`
+- `mediabrowser_timer_cancelled`
+- `mediabrowser_refresh_progress`
+- `mediabrowser_scheduled_task_ended` (resource intensive, disabled by default)
+- `mediabrowser_scheduled_task_info` (resource intensive, disabled by default)
+- `mediabrowser_package_installation_cancelled`
+- `mediabrowser_package_installation_failed`
+- `mediabrowser_package_installation_completed`
+- `mediabrowser_package_unisntalled`
+- `mediabrowser_activity_log_entry` (resource intensive, disabled by default)
+
+
+
+
+### Service mediabrowser.send_message
+
 ## Contributions are welcome!
 
 If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)
@@ -214,6 +242,7 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 [releases]: https://github.com/rumbu13/ha-mediabrowser/releases
 
 [services]: #services
+[events]: #events
 [mediasource]: https://www.home-assistant.io/integrations/#media-source
 [mediaplayer]: https://www.home-assistant.io/integrations/#media-player
 [sensor]: https://www.home-assistant.io/integrations/#sensor
