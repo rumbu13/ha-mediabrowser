@@ -11,14 +11,12 @@
 
 _Home Assistant integration for [Emby][emby] and [Jellyfin][jellyfin]._
 
-![alt text](assets/mb_movies.png)
-![alt text](assets/tvshows.png)
-![alt text](assets/mb_actors.png)
+
 
 ## Summary
 
 This integration support both media server types and can manage multiple servers. The following components are installed:
-- [Media Source][mediasource] for browsing your server(s) libraries
+- [Media Source](#media-source) for browsing your server(s) libraries
 - [Media Player](#media-players), one for each connected session
 - [Session Sensor](#sessions-sensor) for active sessions
 - [Library Sensor](#library-sensor), custom sensors for libraries, item types and users
@@ -165,6 +163,15 @@ The state of this sensor will display the number of items in the library, based 
 - `tagline`
 - various image links (`primary`, `backdrop`, `art`, etc)
 
+## Media Source
+
+Works with any player cappable to decode mp3 audio and h264 video.
+
+![alt text](assets/mb_movies.png)
+![alt text](assets/tv_shows.png)
+![alt text](assets/mb_actors.png)
+
+
 
 ## Services
 ### Service mediabrowser.send_message
@@ -261,6 +268,8 @@ Various events can be fired by the integration, all of them starting with `media
 - `mediabrowser_package_installation_completed`
 - `mediabrowser_package_unisntalled`
 - `mediabrowser_activity_log_entry` (resource intensive, disabled by default)
+
+
 
 ## Contributions are welcome!
 
