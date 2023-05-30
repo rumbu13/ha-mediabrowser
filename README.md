@@ -97,17 +97,32 @@ Selecting Media Player option will alow you to control how the integration creat
 
 Please note that some events are resource intensive and will flood the *Home Assistant Event Bus*. Enable them with care.
 
+### Adding a library sensor
 
+|Setting|Comments|
+|-|-|
+|Item type|Select the type of media you wang the monitor, e.g. Movies, Songs, Artists, Genres|
+|Library|Select the library were the statistics will be calculated|
+|User|Select the username which will be used as point of view when extractng statistics|
 
-You can add a new library sensor by selecting the relevant properties. You must choose the *type of media* that will be bound to the sensor and optionally the *library* and the *user*. The information extracted from your server will be limited to the sepcified library and/or user
+Please note that you cannot create two library sensors for the same combination of *type*, *library* and *user*.
 
-![add_sensor_step](assets/add_sensor.png "Add Sensor")
+### Removing a library sensor
 
-Previously created sensors can be removed
+Previously created sensors can be removed. Select the sensor to remove in the dialog.
 
-![remove_sensor_step](assets/remove_sensor.png "Remove Sensor")
+### Advanced options:
 
+|Setting|Comments|
+|-|-|
+|Server name|Custom name to be used when creating library sensors or media players|
+|Client name|How this integration is reporting its name to your server|
+|Device name|How this integration is reporting its device name to your server|
+|Device identifier|How this integration is reporting its unique identifier to your server|
+|Device version|How this integration is reporting its version to your server|
+|Timeout|How much time to wait before considering that your connection to the server is down|
 
+Generally speaking, it's better to not touch this settings, but if you need to clearly identify this integration in your Emby or Jellyfin server, this is the place to do it.
 
 ## Services
 ### Service mediabrowser.send_message
