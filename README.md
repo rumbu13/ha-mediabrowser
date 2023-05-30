@@ -17,7 +17,7 @@ _Home Assistant integration for [Emby][emby] and [Jellyfin][jellyfin]._
 
 This integration support both media server types and can manage multiple servers. The following components are installed:
 - [Media Source][mediasource] for browsing your server(s) libraries
-- [Media Player](#media-player), one for each connected session
+- [Media Player](#media-players), one for each connected session
 - [Session Sensor](#sessions-sensor) for active sessions
 - [Library Sensor](#library-sensor), custom sensors for libraries, item types and users
 - [Services][services] for sending commands or messages to active sessions
