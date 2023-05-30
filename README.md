@@ -1,5 +1,7 @@
 # Media Browser - Emby/Jellyfin integration
 
+![alt text](assets/mb_player.png)
+
 [![GitHub Release][releases-shield]][releases]
 
 [![License][license-shield]](LICENSE)
