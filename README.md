@@ -73,21 +73,31 @@ Selecting authentication option will allow you to change the *Username* and *pas
 Selecting Media Player option will alow you to control how the integration creates media players for server sessions. By default, all sessions will result in a different media player. If you are not interested in some sessions, you can avoid creating media player entities for them. Check the corresponding category and no more media players will be created.
 
 |Setting|Comments|
-|-|-|-|-|
-|Ignore web players|The integration will not create media players for web sessions
-|Ignore DLNA players|The integration will not create media players for DLNA sessions
-|Ignore mobile players|The integration will not create media players for mobile sessions
-|Ignore application players|The integration will not create media players for known applications (e.g other integrations)
+|-|-|
+|Ignore web players|The integration will not create media players for web sessions|
+|Ignore DLNA players|The integration will not create media players for DLNA sessions|
+|Ignore mobile players|The integration will not create media players for mobile sessions|
+|Ignore application players|The integration will not create media players for known applications (e.g other integrations)|
 |Auto purge media players|By default, media players which don't have a corresponding session on your server will stay in the entity registry as *unavailable*. This can happen when you manually delete on your server a device or when you choose to ignore some kind of players and they are not reported anymore to Home Assistant. In order to auto delete them, check the *purge* option, otherwise you can go to your *Entity Registry* in Home Assistant and delete them manually.|
 
+### Library sensors options
+
+|Setting|Comments|
+|-|-|
+|Provide data for upcoming media card|Library sensors provide already in the attributes information about the latest media added on your server, but also can provide the same information in a special format intended to be displayed in the well-known [Upcoming Media Card][upcoming-media-card].|
+
+### Events options
+
+|Setting|Resource Intensive|Comments|
+|-|-|-|
+|Send events on session changes|yes|Fire a Home Assistant event every time a session is added, removed or changed |
+|Send events for user activity|yes|Fire a Home Assistant event every time a user has performed an action|
+|Send events for tasks|yes|Fire a Home Assistant event every time a task is created, ended or is reporting progress|
+|Send other events|no|Fire a Home Assistant other events.
+
+Please note that some events are resource intensive and will flood the *Home Assistant Event Bus*. Enable them with care.
 
 
-
-
-
-Library sensors provide already in the attributes information about the latest media added on your server, but also can provide the same information in a special format intended to be displayed in the well-known [Upcoming Media Card][upcoming-media-card].
-
-![auth_step](assets/media_players.png "Media Players")
 
 You can add a new library sensor by selecting the relevant properties. You must choose the *type of media* that will be bound to the sensor and optionally the *library* and the *user*. The information extracted from your server will be limited to the sepcified library and/or user
 
