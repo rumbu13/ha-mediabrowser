@@ -15,7 +15,7 @@ _Home Assistant integration for [Emby][emby] and [Jellyfin][jellyfin]._
 
 ## Summary
 
-This integration support both media server types. The following components are installed:
+This integration support both media server types and can manage multiple servers. The following components are installed:
 - [Media Source][mediasource] for browsing your server(s) libraries
 - [Media Player][mediaplayer], one for each connected session
 - [Session Sensor][sensor] for active sessions
@@ -24,6 +24,7 @@ This integration support both media server types. The following components are i
 - [Server Button][button] for rescanning, rebooting or stopping your server
 - [Play Media Service][play_media] allowing you to play anything from your libraries based on various search criteria
 - [Events][events] for pretty much every message sent by the server
+
 
 
 
@@ -48,27 +49,41 @@ After selecting one of the available servers or if the integration discovers onl
 |Setting|Required|Example|Comments|
 |-|-|-|-|
 |`URL`|yes|http://myflix:8096|Enter your Emby pr Jellyfin address. If you omit your port number, the integration will assume a *default port* (8096). Put *https* in formt of your url to *use SSL*|
-|`User`|yes|Administrator|User name used to make various requests to the server. Please use an *administrative account* in order to let the integration access all libraries.
-|`Password`|yes|-|Password used to authenticate
-|`Name`|no|Myflix|Custom name of your server. This is used especialyy for entity naming. Leave blank to use the *default server name*
+|`User`|yes|Administrator|User name used to make various requests to the server. Please use an *administrative account* in order to let the integration access all libraries.|
+|`Password`|yes|-|Password used to authenticate|
+|`Name`|no|Myflix|Custom name of your server. This is used especialyy for entity naming. Leave blank to use the *default server name*|
 
-
-
-Configuration is done at these step, a media player is created for each of the server sessions and three default library sensors are also craeted for your *Movies*, *Series* and *Songs*.
+Configuration is done at these step, a media player is created for each of the server sessions and three default library sensors are also created for your *Movies*, *Series* and *Songs*. 
 
 ## Options
 
-If you are not happy with the default settings, you can fine tune the configuration by going in Hoe Assistant to *Settings*, *Device & Services*, select the *Media Browser* integration and click on the *Configure* button. A menu is diaplayed where you can choose your further action.
+If you are not happy with the default settings, you can fine tune the configuration by going in Home Assistant to *Settings*, *Device & Services*, select the *Media Browser* integration and click on the *Configure* button. A menu is diaplayed where you can choose your further action.
 
-![select_options_step](assets/select_options.png "Options")
+### Authentication options
 
-Selecting authentication option will allow you to change the *API key* or the *user* used in various interactions with your server. By default, the integration will select automatically the first user with administrative privileges and with access to all your libraries. Though not recommended, you can select another user, but please note that the integration needs administrative access to your server for most interactions.
+Selecting authentication option will allow you to change the *Username* and *password*
 
-![auth_step](assets/auth.png "Authentication")
+|Setting|Required|Example|Comments|
+|-|-|-|-|
+|`User`|yes|Administrator|User name used to make various requests to the server. Please use an *administrative account* in order to let the integration access all libraries.|
+|`Password`|yes|-|Password used to authenticate|
+
+### Media Players options
 
 Selecting Media Player option will alow you to control how the integration creates media players for server sessions. By default, all sessions will result in a different media player. If you are not interested in some sessions, you can avoid creating media player entities for them. Check the corresponding category and no more media players will be created.
 
-By default, media players which don't have a corresponding session on your server will stay in the entity registry as *unavailable*. This can happen when you manually delete on your server a device or when you choose to ignore some kind of players and they are not reported anymore to Home Assistant. In order to auto delete them, check the *purge* option, otherwise you can go to your *Entity Registry* in Home Assistant and delete them.
+|Setting|Required|Example|Comments|
+|-|-|-|-|
+|`Ignore web players`|no|-|The integration will not create media players for web sessions
+|`Ignore DLNA players`|no|-|The integration will not create media players for DLNA sessions
+|`Ignore mobile players`|no|-|The integration will not create media players for mobile sessions
+|`Ignore application players`|no|-|The integration will not create media players for known applications (e.g other integrations)
+|`Auto purge media players`|no|-|By default, media players which don't have a corresponding session on your server will stay in the entity registry as *unavailable*. This can happen when you manually delete on your server a device or when you choose to ignore some kind of players and they are not reported anymore to Home Assistant. In order to auto delete them, check the *purge* option, otherwise you can go to your *Entity Registry* in Home Assistant and delete them manually.|
+
+
+
+
+
 
 Library sensors provide already in the attributes information about the latest media added on your server, but also can provide the same information in a special format intended to be displayed in the well-known [Upcoming Media Card][upcoming-media-card].
 
