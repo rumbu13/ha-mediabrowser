@@ -215,11 +215,6 @@ Various events can be fired by the integration, all of them starting with `media
 - `mediabrowser_package_unisntalled`
 - `mediabrowser_activity_log_entry` (resource intensive, disabled by default)
 
-
-
-
-### Service mediabrowser.send_message
-
 ## Contributions are welcome!
 
 If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)
@@ -247,7 +242,7 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 [mediaplayer]: https://www.home-assistant.io/integrations/#media-player
 [sensor]: https://www.home-assistant.io/integrations/#sensor
 [button]: https://www.home-assistant.io/integrations/#button
-[play_media]: https://www.home-assistant.io/integrations/media_player/#service-media_playerplay_media
+[play_media]: #service-mediaplayerplay_media
 
 [emby-command]: http://swagger.emby.media/?staticview=true#/SessionsService/postSessionsByIdCommand
 [jellyfin-command]: https://api.jellyfin.org/#tag/Session/operation/SendGeneralCommand
