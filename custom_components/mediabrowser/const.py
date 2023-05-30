@@ -77,6 +77,9 @@ DISCOVERY_PORT = 7359
 
 KEEP_ALIVE_TIMEOUT = 59
 
+SERVICE_SEND_MESSAGE = "send_message"
+SERVICE_SEND_COMMAND = "send_command"
+
 
 class ServerType(StrEnum):
     """MediaBrowser server types"""

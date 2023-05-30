@@ -856,7 +856,7 @@ class MediaBrowserHub:
                 self._last_activity_log_entry = new_last
 
             messages = [
-                ("activity_log_entry", entry)
+                ("activity_log_entry", entry | {"server_id": self.server_id})
                 for entry in sorted(entries, key=lambda x: x.get(Item.DATE, 0))
             ]
 

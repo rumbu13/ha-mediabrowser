@@ -7,6 +7,8 @@ from typing import Any, Callable
 
 import homeassistant.helpers.entity_registry as entreg
 import homeassistant.util.dt as utildt
+import voluptuous as vol
+
 from homeassistant.components.media_player import (
     MediaPlayerEntity,
     MediaPlayerEntityFeature,
@@ -16,7 +18,11 @@ from homeassistant.components.media_player import (
 )
 from homeassistant.components.media_player.browse_media import BrowseMedia
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.entity_platform import (
+    AddEntitiesCallback,
+    async_get_current_platform,
+)
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.core import HomeAssistant
 from .hub import MediaBrowserHub
@@ -28,6 +34,8 @@ from .const import (
     DOMAIN,
     MANUFACTURER_MAP,
     MEDIA_TYPE_MAP,
+    SERVICE_SEND_COMMAND,
+    SERVICE_SEND_MESSAGE,
     TICKS_PER_SECOND,
     EntityType,
     ImageType,
@@ -77,6 +85,27 @@ async def async_setup_entry(
     """Sets up media players from a config entry."""
 
     hub: MediaBrowserHub = hass.data[DOMAIN][entry.entry_id][DATA_HUB]
+
+    platform = async_get_current_platform()
+
+    platform.async_register_entity_service(
+        SERVICE_SEND_MESSAGE,
+        {
+            vol.Required("text"): cv.string,
+            vol.Required("header"): cv.string,
+            vol.Optional("timeout"): cv.Number,
+        },  # type: ignore
+        "async_send_message",
+    )
+
+    platform.async_register_entity_service(
+        SERVICE_SEND_COMMAND,
+        {
+            vol.Required("command"): cv.string,
+            vol.Optional("arguments"): cv.Any,
+        },  # type: ignore
+        "async_send_command",
+    )
 
     async def session_changed(
         old_session: dict[str, Any] | None, new_session: dict[str, Any] | None

@@ -428,7 +428,7 @@ class MediaBrowserOptionsFlow(OptionsFlow):
             for entry in async_entries_for_config_entry(
                 entity_registry, self.config_entry.entry_id
             )
-            if entry.unique_id.endswith("-latest")
+            if entry.unique_id.endswith(f"-{EntityType.LIBRARY}")
         }
 
         if len(sensors) == 0 and len(entries) == 0:
@@ -467,7 +467,7 @@ class MediaBrowserOptionsFlow(OptionsFlow):
                 {
                     vol.Required(
                         CONF_SENSOR_REMOVE,
-                        default=next(iter(entry_list)),  # type: ignore
+                        default=next(iter(entry_list), None),  # type: ignore
                     ): vol.In(entry_list),
                 }
             ),

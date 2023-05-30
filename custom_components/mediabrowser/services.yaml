@@ -1,0 +1,99 @@
+send_message:
+  name: Send Message
+  description: Sends a message to a session
+  target:
+    entity:
+      integration: mediabrowser
+      domain: media_player
+  fields:
+    text:
+      name: "Text"
+      description: "The message content"
+      required: true
+      example: "How do you do?"
+      selector:
+        text:
+    header:
+      name: "Title"
+      description: "The message title"
+      required: true
+      example: "Hello"
+      selector:
+        text:
+    timeout:
+      name: "Timeout"
+      description: "The message timeout. If omitted the user will have to confirm viewing the message."
+      required: false
+      example: 30
+      selector:
+        number:
+          unit_of_measurement: seconds
+          mode: box
+
+send_command:
+  name: Send command
+  description: Sends a message to a session
+  target:
+    entity:
+      integration: mediabrowser
+      domain: media_player
+  fields:
+    command:
+      name: "Command"
+      description: "Command to be sent"
+      required: true
+      example: "GoHome"
+      selector:
+        select:
+          custom_value: true
+          options:
+          - Back
+          - ChannelDown
+          - ChannelUp
+          - DisplayContent
+          - DisplayMessage
+          - GoHome
+          - GoToSearch
+          - GoToSettings
+          - Guid
+          - MoveDown
+          - MoveLeft
+          - MoveRight
+          - MoveUp
+          - Mute
+          - NextLetter
+          - PageDown
+          - PageUp
+          - Play
+          - PlayMediaSource
+          - PlayNext
+          - PlayState
+          - PlayTrailers
+          - PreviousLetter
+          - Select
+          - SetAudioStreamIndex
+          - SetRepeatMode
+          - SetSubtitleStreamIndex
+          - SetVolume
+          - SendKey
+          - SendString
+          - SetShuffleQueue
+          - SetMaxStremingBitrate
+          - TakeScreenshot
+          - ToggleContextMenu
+          - ToggleFullScreen
+          - ToggleMute
+          - ToggleOsd
+          - ToggleOsdMenu
+          - ToggleStats
+          - Unmute
+          - VolumeDown
+          - VolumeUp
+    arguments:
+      name: "Arguments"
+      description: "Command arguments"
+      required: false
+      selector:
+        object:
+
+
