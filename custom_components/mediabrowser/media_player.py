@@ -48,7 +48,13 @@ from .const import (
 
 from .entity import MediaBrowserEntity
 from .errors import NotFoundError
-from .helpers import extract_player_key, get_image_url, as_float, as_int
+from .helpers import (
+    camel_cased_json,
+    extract_player_key,
+    get_image_url,
+    as_float,
+    as_int,
+)
 
 VOLUME_RATIO = 100
 _LOGGER = logging.getLogger(__package__)
@@ -399,15 +405,15 @@ class MediaBrowserPlayer(MediaBrowserEntity, MediaPlayerEntity):
         self, media_type: MediaType | str, media_id: str, **kwargs: Any
     ) -> None:
         if self._session is not None:
-            if media_id.startswith("{"):
+            if media_id.startswith(f"media_source://{DOMAIN}"):
+                media_id = media_id.split("/")[-1]
+            elif media_id.startswith("{"):
                 media_id = await self._async_play_media_json(media_id)
-
             params = {"PlayCommand": "PlayNow", "ItemIds": media_id}
-
             await self.hub.async_play(self._session_key, params)
 
     async def _async_play_media_json(self, media_id: str) -> str:
-        params = json.loads(media_id)
+        params = camel_cased_json(json.loads(media_id)) or {}
         params["Limit"] = 1
         try:
             items = (await self.hub.async_get_items(params))[Response.ITEMS][0]

@@ -16,27 +16,9 @@ from .const import (
 
 _LOGGER = logging.getLogger(__package__)
 
-MOCK = True
-
 
 def discover_mb(timeout: float = DISCOVERY_TIMEOUT) -> list[dict[str, Any]]:
     """Broadcasts all local networks and waits for a response from Emby or Jellyfin servers."""
-    if MOCK:
-        return [
-            {
-                "Address": "http://192.168.1.145:8096",
-                "Id": "33aeee8e703b4e168a84d63fe37b8dfe",
-                "Name": "Rumbuflix",
-                "Type": ServerType.EMBY,
-            },
-            {
-                "Address": "http://192.168.1.145:8097",
-                "Id": "19a3c6e569704103847360d350995f47",
-                "Name": "ZOTAC",
-                "EndpointAddress": None,
-                "Type": ServerType.JELLYFIN,
-            },
-        ]
     return _discover_message(
         DISCOVERY_MESSAGE_EMBY, ServerType.EMBY, timeout
     ) + _discover_message(DISCOVERY_MESSAGE_JELLYFIN, ServerType.JELLYFIN, timeout)

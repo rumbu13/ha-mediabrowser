@@ -27,10 +27,15 @@ _SNAKE_SUB1 = re.compile("(.)([A-Z][a-z]+)")
 _SNAKE_SUB2 = re.compile("([a-z0-9])([A-Z])")
 
 
-def snake_case(name):
+def snake_case(name: str):
     "Converts a string to snake case"
     name = re.sub(_SNAKE_SUB1, r"\1_\2", name)
     return re.sub(_SNAKE_SUB2, r"\1_\2", name).lower()
+
+
+def camel_case(name: str):
+    "Converts a string to camel case"
+    name = "".join([part.capitalize() for part in name.split("_")])
 
 
 def get_image_url(
@@ -188,6 +193,21 @@ def snake_cased_json(original: Any | None) -> Any | None:
         return result
     elif isinstance(original, list):
         return [snake_cased_json(item) for item in original]
+    else:
+        return original
+
+
+def camel_cased_json(original: Any | None) -> Any | None:
+    """Convert an entire json object to camel case"""
+    if original is None:
+        return None
+    if isinstance(original, dict):
+        result = {}
+        for key, value in original.items():
+            result[camel_case(key)] = camel_cased_json(value)
+        return result
+    elif isinstance(original, list):
+        return [camel_cased_json(item) for item in original]
     else:
         return original
 
