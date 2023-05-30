@@ -1,12 +1,14 @@
 """Helpers for the Media Browser (Emby/Jellyfin) integration."""
 
 
+from datetime import datetime
 import logging
 import re
 from typing import Any
 
 from dateutil import parser
 from dateutil.parser import ParserError
+import inspect
 
 from .const import (
     CONF_SENSOR_ITEM_TYPE,
@@ -15,7 +17,7 @@ from .const import (
     ImageCategory,
     ImageType,
     ItemType,
-    Key,
+    Item,
 )
 
 _LOGGER = logging.getLogger(__package__)
@@ -36,10 +38,10 @@ def get_image_url(
 ) -> str | None:
     """Gets an image falling back to parent (optionally)"""
     image_id: str | None = None
-    parts = data[Key.ID].split("/")
+    parts = data[Item.ID].split("/")
     real_id: str = parts[0] if len(parts) == 0 else parts[-1]
     image_tags = f"{image_type}ImageTags"
-    if Key.IMAGE_TAGS in data and image_type in data[Key.IMAGE_TAGS]:
+    if Item.IMAGE_TAGS in data and image_type in data[Item.IMAGE_TAGS]:
         image_id = real_id
     elif image_tags in data and len(data[image_tags]) > 0:
         image_id = real_id
@@ -103,56 +105,96 @@ def extract_player_key(unique_id: str) -> str:
     return "-".join(parts[1:-1])
 
 
-def get_player_key(session: dict[str, Any]) -> str:
-    """Gets a unique session key"""
-    return f"{session[Key.DEVICE_ID]}-{session[Key.CLIENT]}"
+def as_datetime(
+    data: dict[str, Any], key: str, log_level: int = logging.DEBUG
+) -> datetime | None:
+    """Checks if val can be converted to datetime and logs failure optionaly"""
+    if dateval := data.get(key):
+        if isinstance(dateval, datetime):
+            return dateval
+        try:
+            result = parser.isoparse(dateval)
+        except ParserError:
+            if log_level != logging.NOTSET:
+                _LOGGER.log(
+                    log_level, "Invalid date/time value for %s: %s", key, dateval
+                )
+        else:
+            return result
+    return None
 
 
-def is_float(val: Any, log_level: int = logging.NOTSET) -> bool:
-    """Checks if val can be converted to int"""
-    try:
-        _ = float(val)
-    except ValueError:
+def as_int(
+    data: dict[str, Any], key: str, log_level: int = logging.DEBUG
+) -> int | None:
+    """Checks if val can be converted to int and logs failure optionaly"""
+    if intval := data.get(key):
+        if isinstance(intval, int):
+            return intval
+        try:
+            result = int(intval)
+        except ValueError:
+            if log_level != logging.NOTSET:
+                _LOGGER.log(log_level, "Invalid integral value for %s: %s", key, intval)
+        else:
+            return result
+    return None
+
+
+def as_float(
+    data: dict[str, Any], key: str, log_level: int = logging.DEBUG
+) -> float | None:
+    """Checks if val can be converted to int and logs failure optionaly"""
+    if floatval := data.get(key):
+        if isinstance(floatval, float):
+            return floatval
+        try:
+            result = float(floatval)
+        except (ValueError, OverflowError):
+            if log_level != logging.NOTSET:
+                _LOGGER.log(log_level, "Invalid float value for %s: %s", key, floatval)
+        else:
+            return result
+    return None
+
+
+def as_bool(
+    data: dict[str, Any], key: str, log_level: int = logging.DEBUG
+) -> bool | None:
+    """Checks if val can be converted to int and logs failure optionaly"""
+    if boolval := data.get(key):
+        if isinstance(boolval, bool):
+            return boolval
+        elif isinstance(boolval, str):
+            bool_str = boolval.lower()
+            if bool_str == "true":
+                return True
+            if bool_str == "false":
+                return False
         if log_level != logging.NOTSET:
-            _LOGGER.log(log_level, "Invalid float value: %s", val)
-        return False
-    except OverflowError:
-        if log_level != logging.NOTSET:
-            _LOGGER.log(log_level, "Overflow while converting to float: %s", val)
-        return False
-    return True
+            _LOGGER.log(log_level, "Invalid bool value for %s: %s", key, boolval)
+
+    return None
 
 
-def is_int(val: Any, log_level: int = logging.NOTSET) -> bool:
-    """Checks if val can be converted to int"""
-    try:
-        _ = int(val)
-    except ValueError:
-        if log_level != logging.NOTSET:
-            _LOGGER.log(log_level, "Invalid int value: %s", val)
-        return False
-    return True
-
-
-def is_datetime(val: Any, log_level: int = logging.NOTSET) -> bool:
-    """Checks if val can be converted to int"""
-    try:
-        _ = parser.isoparse(val)
-    except ParserError:
-        if log_level != logging.NOTSET:
-            _LOGGER.log(log_level, "Invalid date value: %s", val)
-        return False
-    return True
+def snake_cased_json(original: Any | None) -> Any | None:
+    """Convert an entire json object to snake case"""
+    if original is None:
+        return None
+    if isinstance(original, dict):
+        result = {}
+        for key, value in original.items():
+            result[snake_case(key)] = snake_cased_json(value)
+        return result
+    elif isinstance(original, list):
+        return [snake_cased_json(item) for item in original]
+    else:
+        return original
 
 
 def autolog(message):
     "Automatically log the current function details."
-    import inspect
-
-    # Get the previous frame in the stack, otherwise it would
-    # be this function!!!
     func = inspect.currentframe().f_back.f_code
-    # Dump the message + the name of this function to the log.
     _LOGGER.debug(
         "%s: %s in %s:%i", message, func.co_name, func.co_filename, func.co_firstlineno
     )
