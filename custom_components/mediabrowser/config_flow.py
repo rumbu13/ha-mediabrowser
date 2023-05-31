@@ -16,7 +16,6 @@ from homeassistant.helpers.entity_registry import (
     async_entries_for_config_entry,
     async_get,
 )
-from voluptuous.schema_builder import UNDEFINED
 
 from .const import (
     CONF_CACHE_SERVER_API_KEY,
@@ -148,10 +147,10 @@ class MediaBrowserConfigFlow(ConfigFlow, domain=DOMAIN):  # type: ignore
 
         previous_input = user_input or {}
 
-        default_url = UNDEFINED
-        default_name = UNDEFINED
-        default_username = UNDEFINED
-        default_password = UNDEFINED
+        default_url = None
+        default_name = None
+        default_username = None
+        default_password = None
         if self.discovered_server_id is not None and self.available_servers is not None:
             server = self.available_servers[self.discovered_server_id]
             default_url = server[Discovery.ADDRESS]
@@ -173,7 +172,7 @@ class MediaBrowserConfigFlow(ConfigFlow, domain=DOMAIN):  # type: ignore
                 ): str,
                 vol.Optional(
                     CONF_NAME,
-                    description={"suggested_value": default_name},
+                    default=previous_input.get(CONF_NAME, default_name),
                 ): str,
             }
         )
