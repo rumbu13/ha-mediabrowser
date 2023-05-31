@@ -50,7 +50,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.bus.async_fire(
             f"{DOMAIN}_{message_type}",
             snake_cased_json(data),
-            context=Context(hub.user_id, parent_id=hub.server_id),
         )
 
     try:
