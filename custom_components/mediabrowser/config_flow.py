@@ -52,6 +52,7 @@ from .const import (
     DEFAULT_IGNORE_WEB_PLAYERS,
     DEFAULT_PURGE_PLAYERS,
     DEFAULT_SENSORS,
+    DEFAULT_SERVER_NAME,
     DEFAULT_UPCOMING_MEDIA,
     DOMAIN,
     SENSOR_ITEM_TYPES,
@@ -148,7 +149,7 @@ class MediaBrowserConfigFlow(ConfigFlow, domain=DOMAIN):  # type: ignore
         previous_input = user_input or {}
 
         default_url = None
-        default_name = None
+        default_name = DEFAULT_SERVER_NAME
         default_username = None
         default_password = None
         if self.discovered_server_id is not None and self.available_servers is not None:
