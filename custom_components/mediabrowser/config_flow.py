@@ -90,7 +90,7 @@ class MediaBrowserConfigFlow(ConfigFlow, domain=DOMAIN):  # type: ignore
         self.available_servers = {server[Server.ID]: server for server in discover_mb()}
         for entry in self._async_current_entries(include_ignore=True):
             if entry.unique_id is not None:
-                self.available_servers.pop(entry.unique_id)
+                self.available_servers.pop(entry.unique_id, None)
 
         if self.available_servers is not None:
             if len(self.available_servers) == 0:
@@ -637,6 +637,7 @@ async def _validate_config(
                 errors["base"] = "bad_request"
         _LOGGER.exception("ERROR")
     except (TimeoutError, asyncio.TimeoutError):
+        _LOGGER.error("Timeout while connecting to %s", hub.server_url)
         errors["base"] = "timeout"
     except ClientMismatchError:
         errors["base"] = "mismatch"
