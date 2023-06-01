@@ -4,6 +4,7 @@
 from datetime import datetime
 import logging
 import re
+from sys import getsizeof
 from typing import Any
 
 from dateutil import parser
@@ -18,6 +19,9 @@ from .const import (
     ImageType,
     ItemType,
     Item,
+    LibraryChange,
+    Session,
+    UserDataChange,
 )
 
 _LOGGER = logging.getLogger(__package__)
@@ -213,8 +217,90 @@ def camel_cased_json(original: Any | None) -> Any | None:
 
 
 def autolog(message):
-    "Automatically log the current function details."
+    """Automatically log the current function details."""
     func = inspect.currentframe().f_back.f_code  # type: ignore
     _LOGGER.debug(
         "%s: %s in %s:%i", message, func.co_name, func.co_filename, func.co_firstlineno
     )
+
+
+def get_session_event_data(session: dict[str, Any]) -> dict[str, Any]:
+    """Translate session information in event data"""
+    result: dict[str, Any] = {}
+
+    for key in [
+        Session.REMOTE_END_POINT,
+        Session.ID,
+        Session.CLIENT,
+        Session.LAST_ACTIVITY_DATE,
+        Session.SERVER_ID,
+        Session.DEVICE_NAME,
+        Session.APPLICATION_VERSION,
+        Session.PLAY_STATE,
+        Session.APP_ICON_URL,
+        Session.SUPPORTS_REMOTE_CONTROL,
+    ]:
+        if field := session.get(key):
+            result[key] = field
+
+    if play_state := session.get(Session.PLAY_STATE):
+        result |= play_state
+
+    if npi := session.get(Session.NOW_PLAYING_ITEM):
+        for key in [
+            Item.NAME,
+            Item.ID,
+            Item.PARENT_ID,
+            Item.PATH,
+            Item.RUNTIME_TICKS,
+            Item.TYPE,
+            Item.MEDIA_TYPE,
+        ]:
+            if field := npi.get(key):
+                result[f"NowPlaying{key}"] = field
+    return result
+
+
+def get_user_data_changed_event_data(event: dict[str, Any]) -> dict[str, Any]:
+    """Translate user data changed notification in event data"""
+    result = {}
+    if user_id := event.get(UserDataChange.USER_ID):
+        result[UserDataChange.USER_ID] = user_id
+    if data_list := event.get(UserDataChange.USER_DATA_LIST):
+        if len(data_list) > 5:
+            result[UserDataChange.USER_DATA_LIST] = data_list[:5]
+        else:
+            result[UserDataChange.USER_DATA_LIST] = data_list
+
+    return result
+
+
+def get_library_changed_event_data(event: dict[str, Any]) -> dict[str, Any]:
+    """Translate user data changed notification in event data"""
+    result = {}
+    for key in [
+        LibraryChange.FOLDERS_ADDED_TO,
+        LibraryChange.ITEMS_ADDED,
+        LibraryChange.ITEMS_REMOVED,
+        LibraryChange.ITEMS_UPDATED,
+        LibraryChange.FOLDERS_REMOVED_FROM,
+    ]:
+        if data := event.get(key):
+            if len(data) > 5:
+                result[key] = data[:5]
+            else:
+                result[key] = data
+
+    return result
+
+
+def size_of(data: Any):
+    """Returns the approximate memory footprint an object and all of its contents."""
+
+    result = getsizeof(data)
+    if isinstance(data, list):
+        result += sum((size_of(item) for item in data))
+    elif isinstance(data, dict):
+        result += sum((size_of(key) + size_of(item) for key, item in data.items()))
+
+    return result

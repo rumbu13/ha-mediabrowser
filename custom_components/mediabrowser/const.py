@@ -204,6 +204,7 @@ class Item(StrEnum):
     MBCLIENT = "MediaBrowserClient"
     MEDIA_SOURCE_ID = "MediaSourceId"
     MEDIA_SOURCES = "MediaSources"
+    MEDIA_STREAMS = "MediaStreams"
     MEDIA_TYPE = "MediaType"
     MESSAGE_TYPE = "MessageType"
     NAME = "Name"
@@ -362,6 +363,36 @@ class VirtualFolder(StrEnum):
     YEARS = "years"
 
 
+class UserDataChange(StrEnum):
+    """Keys for UserDataChanged event"""
+
+    USER_ID = "UserId"
+    USER_DATA_LIST = "UserDataList"
+
+
+class LibraryChange(StrEnum):
+    """Keys for LibraryChange event"""
+
+    ITEMS_ADDED = "ItemsAdded"
+    ITEMS_UPDATED = "ItemsUpdated"
+    ITEMS_REMOVED = "ItemsRemoved"
+    FOLDERS_ADDED_TO = "FoldersAddedTo"
+    FOLDERS_REMOVED_FROM = "FoldersRemovedFrom"
+    COLLECTION_FOLDERS = "CollectionFolders"
+
+
+class WebsocketMessage(StrEnum):
+    """Websocket message types"""
+
+    ACTIVITY_LOG_ENTRY = "ActivityLogEntry"
+    FORCE_KEEP_ALIVE = "ForceKeepAlive"
+    KEEP_ALIVE = "KeepAlive"
+    LIBRARY_CHANGED = "LibraryChanged"
+    SCHEDULED_TASK_INFO = "ScheduledTaskInfo"
+    SESSIONS = "Sessions"
+    USER_DATA_CHANGED = "UserDataChanged"
+
+
 class ImageType(StrEnum):
     """Image types."""
 
@@ -454,6 +485,7 @@ class Session(StrEnum):
     PLAYLIST_INDEX = "PlaylistIndex"
     PLAYLIST_LENGTH = "PlaylistLength"
     REMOTE_END_POINT = "RemoteEndPoint"
+    SERVER_ID = "ServerId"
     SUPPORTS_REMOTE_CONTROL = "SupportsRemoteControl"
     SUPPORTED_COMMANDS = "SupportedCommands"
     USER_NAME = "UserName"
